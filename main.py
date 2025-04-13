@@ -29,11 +29,11 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     url = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
 
     headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate, br, zstd",
         "Accept-Language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
-        "Origin": "http://www.encar.com",
-        "Referer": "http://www.encar.com/",
+        "Origin": "https://car.encar.com",
+        "Referer": "https://car.encar.com/",
         "User-Agent": random.choice(
             [
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
