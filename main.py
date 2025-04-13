@@ -45,7 +45,32 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         ),
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, headers=headers)
+    print(f"Making request to URL: {url}")
 
-    return response.json()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(url, headers=headers)
+
+            print(f"Response status: {response.status_code}")
+            print(f"Response headers: {response.headers}")
+
+            if response.status_code != 200:
+                print(f"Error response content: {response.text}")
+                return {
+                    "error": f"API returned status code {response.status_code}",
+                    "content": response.text,
+                }
+
+            try:
+                return response.json()
+            except Exception as e:
+                print(f"JSON decode error: {str(e)}")
+                print(f"Response content: {response.text}")
+                return {
+                    "error": "Failed to parse JSON from API",
+                    "content": response.text,
+                }
+
+    except Exception as e:
+        print(f"Request error: {str(e)}")
+        return {"error": f"Failed to connect to API: {str(e)}"}
