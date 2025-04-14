@@ -1,5 +1,6 @@
 import httpx
 import random
+import urllib.parse
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -30,59 +31,56 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     # Keep track of all attempts
     attempts = []
 
-    # First try using the working format from test.py
-    url1 = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
+    # Manually ensure the pipe characters are encoded properly
+    encoded_sr = sr.replace("|", "%7C")
+    print(f"Original sr: {sr}")
+    print(f"Encoded sr: {encoded_sr}")
+
+    # First attempt with fixed parameter format
+    url1 = (
+        f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}"
+    )
     print(f"First attempt URL: {url1}")
 
-    # Second try with client sr parameter
-    url2 = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
+    # Second attempt with a different format
+    url2 = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}&inav=%7CMetadata%7CSort"
     print(f"Second attempt URL: {url2}")
 
-    # Third try with the general endpoint
-    url3 = f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={sr}"
+    # Third attempt with the general API
+    url3 = f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={encoded_sr}"
     print(f"Third attempt URL: {url3}")
 
     headers = {
         "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Accept-Language": "en,ru;q=0.9",
-        "Origin": "https://car.encar.com",
-        "Referer": "https://car.encar.com/",
-        "Sec-Ch-Ua": '"Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"macOS"',
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-site",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Origin": "https://m.encar.com",
+        "Referer": "https://m.encar.com/index.html",
+        "User-Agent": random.choice(
+            [
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+                "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36",
+                "Mozilla/5.0 (iPad; CPU OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1",
+            ]
+        ),
     }
 
     cookies = {
-        "AWSALBCORS": "uME2vZ7sKPnYN0fdwyK/KEmgcDh2KFM4JdRtWnbr1LWwNqjuXJzHuSAPkaxay//jbpfjpfWo8vrfNEpa60X5/Ft5872yPRYNWQVzS8s5o4x9kKkCkSi/ECamUTIt",
-        "cto_bundle": "gyv4dF9mS052NExsVjlWMm5wOVFVdXUxNVFwYkE0ZkVGb3hHSDVVZSUyRm1heUVM...",
         "PCID": "17422557868404555606353",
         "PERSISTENT_USERTYPE": "1",
         "wcs_bt": "4b4e532670e38c:1744590425",
-        "RecentViewAllCar": "39100255%2C39282790%2C39429785%2C39164949",
-        "RecentViewCar": "39100255%2C39282790%2C39429785%2C39164949",
-        "RecentViewTruck": "36847390%2C39312108",
-    }
-
-    proxies = {
-        "http://": "http://B01vby:GBno0x@45.118.250.2:8000",
-        "https://": "http://B01vby:GBno0x@45.118.250.2:8000",
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            # Set proxies after client creation
-            client.proxies = proxies
-
+        # Simple client without any complex options
+        async with httpx.AsyncClient(timeout=20.0) as client:
             # Try all URLs in sequence
             for attempt, url in enumerate([url1, url2, url3], 1):
                 try:
                     print(f"Trying attempt {attempt} with URL: {url}")
-                    response = await client.get(url, headers=headers, cookies=cookies)
+                    response = await client.get(
+                        url, headers=headers, cookies=cookies, follow_redirects=True
+                    )
                     print(f"Attempt {attempt} response status: {response.status_code}")
 
                     attempts.append(
