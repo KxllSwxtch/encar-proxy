@@ -9,7 +9,7 @@ app = FastAPI()
 # CORS — разрешаем localhost:5173
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,20 +27,13 @@ app.add_middleware(
 
 @app.get("/api/catalog")
 async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
-    # Keep track of all attempts
     attempts = []
 
-    # First try using the working format from test.py
-    url1 = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
-    print(f"First attempt URL: {url1}")
-
-    # Second try with client sr parameter
-    url2 = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
-    print(f"Second attempt URL: {url2}")
-
-    # Third try with the general endpoint
-    url3 = f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={sr}"
-    print(f"Third attempt URL: {url3}")
+    urls = [
+        f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}",
+        f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}",
+        f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={sr}",
+    ]
 
     headers = {
         "Accept": "application/json, text/plain, */*",
@@ -74,47 +67,37 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            # Set proxies after client creation
-            client.proxies = proxies
-
-            # Try all URLs in sequence
-            for attempt, url in enumerate([url1, url2, url3], 1):
+        async with httpx.AsyncClient(
+            proxies=proxies, headers=headers, cookies=cookies, timeout=30.0
+        ) as client:
+            for i, url in enumerate(urls, 1):
                 try:
-                    print(f"Trying attempt {attempt} with URL: {url}")
-                    response = await client.get(url, headers=headers, cookies=cookies)
-                    print(f"Attempt {attempt} response status: {response.status_code}")
-
-                    attempts.append(
-                        {
-                            "url": url,
-                            "status_code": response.status_code,
-                            "content_length": (
-                                len(response.text) if response.text else 0
-                            ),
-                        }
-                    )
+                    print(f"[Attempt {i}] GET {url}")
+                    response = await client.get(url)
+                    print(f"[Attempt {i}] Status: {response.status_code}")
 
                     if response.status_code == 200:
-                        try:
-                            json_data = response.json()
-                            return json_data
-                        except Exception as e:
-                            print(f"JSON decode error on attempt {attempt}: {str(e)}")
-                            continue
-                except Exception as e:
-                    print(f"Request error on attempt {attempt}: {str(e)}")
-                    attempts.append({"url": url, "error": str(e)})
-                    continue
+                        return response.json()
+                    else:
+                        attempts.append(
+                            {
+                                "url": url,
+                                "status": response.status_code,
+                                "text": response.text[:300],  # обрезаем для логов
+                            }
+                        )
 
-            # If we get here, all attempts failed
-            return JSONResponse(
-                status_code=502,
-                content={"error": "All API attempts failed", "attempts": attempts},
-            )
+                except Exception as e:
+                    traceback.print_exc()
+                    attempts.append({"url": url, "error": str(e)})
+
+        return JSONResponse(
+            status_code=502,
+            content={"error": "All API attempts failed", "attempts": attempts},
+        )
 
     except Exception as e:
-        print(f"Client creation error: {str(e)}")
+        traceback.print_exc()
         return JSONResponse(
-            status_code=502, content={"error": f"Failed to connect to API: {str(e)}"}
+            status_code=500, content={"error": f"Fatal proxy error: {str(e)}"}
         )
