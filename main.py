@@ -37,25 +37,30 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     print(f"Encoded sr: {encoded_sr}")
 
     # First attempt with fixed parameter format
+    # https://encar-proxy.habsida.net/api/catalog
+    # f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}"
+
     url1 = (
-        f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}"
+        f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}"
     )
     print(f"First attempt URL: {url1}")
 
     # Second attempt with a different format
-    url2 = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}&inav=%7CMetadata%7CSort"
+    url2 = f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}&inav=%7CMetadata%7CSort"
     print(f"Second attempt URL: {url2}")
 
     # Third attempt with the general API
-    url3 = f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={encoded_sr}"
+    url3 = (
+        f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}"
+    )
     print(f"Third attempt URL: {url3}")
 
     headers = {
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Origin": "https://m.encar.com",
-        "Referer": "https://m.encar.com/index.html",
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Accept-Language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
+        "Origin": "https://korean-cars-catalogue.com",
+        "Referer": "https://korean-cars-catalogue.com/",
         "User-Agent": random.choice(
             [
                 "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -65,11 +70,11 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         ),
     }
 
-    cookies = {
-        "PCID": "17422557868404555606353",
-        "PERSISTENT_USERTYPE": "1",
-        "wcs_bt": "4b4e532670e38c:1744590425",
-    }
+    # cookies = {
+    #     "PCID": "17422557868404555606353",
+    #     "PERSISTENT_USERTYPE": "1",
+    #     "wcs_bt": "4b4e532670e38c:1744590425",
+    # }
 
     try:
         # Simple client without any complex options
@@ -79,7 +84,7 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                 try:
                     print(f"Trying attempt {attempt} with URL: {url}")
                     response = await client.get(
-                        url, headers=headers, cookies=cookies, follow_redirects=True
+                        url, headers=headers, follow_redirects=True
                     )
                     print(f"Attempt {attempt} response status: {response.status_code}")
 
