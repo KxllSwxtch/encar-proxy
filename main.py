@@ -1,9 +1,10 @@
-import httpx
 import random
 import urllib.parse
+import requests
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import asyncio
 
 app = FastAPI()
 
@@ -36,31 +37,18 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     print(f"Original sr: {sr}")
     print(f"Encoded sr: {encoded_sr}")
 
-    # First attempt with fixed parameter format
-    # https://encar-proxy.habsida.net/api/catalog
-    # f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}"
-
-    url1 = (
+    # Use the new proxy endpoint URL
+    url = (
         f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}"
     )
-    print(f"First attempt URL: {url1}")
-
-    # Second attempt with a different format
-    url2 = f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}&inav=%7CMetadata%7CSort"
-    print(f"Second attempt URL: {url2}")
-
-    # Third attempt with the general API
-    url3 = (
-        f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}"
-    )
-    print(f"Third attempt URL: {url3}")
+    print(f"URL: {url}")
 
     headers = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br, zstd",
-        "Accept-Language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
-        "Origin": "https://korean-cars-catalogue.com",
-        "Referer": "https://korean-cars-catalogue.com/",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Origin": "https://m.encar.com",
+        "Referer": "https://m.encar.com/index.html",
         "User-Agent": random.choice(
             [
                 "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
@@ -70,51 +58,82 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         ),
     }
 
-    # cookies = {
-    #     "PCID": "17422557868404555606353",
-    #     "PERSISTENT_USERTYPE": "1",
-    #     "wcs_bt": "4b4e532670e38c:1744590425",
-    # }
+    cookies = {
+        "PCID": "17422557868404555606353",
+        "PERSISTENT_USERTYPE": "1",
+        "wcs_bt": "4b4e532670e38c:1744590425",
+    }
 
     try:
-        # Simple client without any complex options
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            # Try all URLs in sequence
-            for attempt, url in enumerate([url1, url2, url3], 1):
-                try:
-                    print(f"Trying attempt {attempt} with URL: {url}")
-                    response = await client.get(
-                        url, headers=headers, follow_redirects=True
-                    )
-                    print(f"Attempt {attempt} response status: {response.status_code}")
+        # Using requests in a separate thread to avoid blocking
+        def make_request():
+            try:
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    cookies=cookies,
+                    allow_redirects=True,
+                    timeout=20.0,
+                )
+                return {
+                    "status_code": response.status_code,
+                    "text": response.text,
+                    "success": True,
+                }
+            except Exception as e:
+                return {"success": False, "error": str(e)}
 
-                    attempts.append(
-                        {
-                            "url": url,
-                            "status_code": response.status_code,
-                            "content_length": (
-                                len(response.text) if response.text else 0
-                            ),
-                        }
-                    )
+        # Run the request in a thread pool
+        loop = asyncio.get_event_loop()
+        response_data = await loop.run_in_executor(None, make_request)
 
-                    if response.status_code == 200:
-                        try:
-                            json_data = response.json()
-                            return json_data
-                        except Exception as e:
-                            print(f"JSON decode error on attempt {attempt}: {str(e)}")
-                            continue
-                except Exception as e:
-                    print(f"Request error on attempt {attempt}: {str(e)}")
-                    attempts.append({"url": url, "error": str(e)})
-                    continue
-
-            # If we get here, all attempts failed
+        if not response_data["success"]:
+            print(f"Request error: {response_data['error']}")
+            attempts.append({"url": url, "error": response_data["error"]})
             return JSONResponse(
                 status_code=502,
-                content={"error": "All API attempts failed", "attempts": attempts},
+                content={
+                    "error": f"Request failed: {response_data['error']}",
+                    "attempts": attempts,
+                },
             )
+
+        response_status = response_data["status_code"]
+        response_text = response_data["text"]
+        print(f"Response status: {response_status}")
+
+        attempts.append(
+            {
+                "url": url,
+                "status_code": response_status,
+                "content_length": len(response_text) if response_text else 0,
+            }
+        )
+
+        if response_status == 200:
+            try:
+                import json
+
+                json_data = json.loads(response_text)
+                return json_data
+            except Exception as e:
+                print(f"JSON decode error: {str(e)}")
+                return JSONResponse(
+                    status_code=502,
+                    content={
+                        "error": f"Failed to decode JSON: {str(e)}",
+                        "attempts": attempts,
+                    },
+                )
+
+        # If we get here, the request did not return 200
+        return JSONResponse(
+            status_code=502,
+            content={
+                "error": f"API request failed with status {response_status}",
+                "attempts": attempts,
+            },
+        )
 
     except Exception as e:
         print(f"Client creation error: {str(e)}")
