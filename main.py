@@ -21,6 +21,8 @@ def get_api_headers():
     return {
         "accept": "application/json, text/plain, */*",
         "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
+        "accept-encoding": "gzip, deflate, br",
+        "cache-control": "no-cache",
         "origin": "https://car.encar.com",
         "priority": "u=1, i",
         "referer": "https://car.encar.com/",
@@ -31,6 +33,7 @@ def get_api_headers():
         "sec-fetch-mode": "cors",
         "sec-fetch-site": "same-site",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+        "x-requested-with": "XMLHttpRequest",
     }
 
 
@@ -57,7 +60,15 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         def make_request(url):
             try:
                 print(f"Making catalog request to: {url}")
-                response = requests.get(url, headers=headers, timeout=30.0)
+                # Disable automatic proxy detection
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    timeout=30.0,
+                    proxies={},  # Disable proxy
+                    allow_redirects=True,
+                    verify=True,
+                )
                 return {
                     "success": True,
                     "status_code": response.status_code,
@@ -187,7 +198,15 @@ async def proxy_nav(
         def make_request(url):
             try:
                 print(f"Making nav request to: {url}")
-                response = requests.get(url, headers=headers, timeout=30.0)
+                # Disable automatic proxy detection
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    timeout=30.0,
+                    proxies={},  # Disable proxy
+                    allow_redirects=True,
+                    verify=True,
+                )
                 return {
                     "success": True,
                     "status_code": response.status_code,
