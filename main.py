@@ -30,19 +30,19 @@ app.add_middleware(
 # Headers matching real API requests
 def get_api_headers():
     return {
-        "accept": "application/json, text/plain, */*",
+        "accept": "application/json, text/javascript, */*; q=0.01",
         "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
         "accept-encoding": "gzip, deflate, br",
         "cache-control": "no-cache",
-        "origin": "https://car.encar.com",
+        "origin": "http://www.encar.com",
         "priority": "u=1, i",
-        "referer": "https://car.encar.com/",
+        "referer": "http://www.encar.com/",
         "sec-ch-ua": '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": '"macOS"',
         "sec-fetch-dest": "empty",
         "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
+        "sec-fetch-site": "cross-site",
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
         "x-requested-with": "XMLHttpRequest",
     }
@@ -59,8 +59,8 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
 
     print(f"Catalog request - q: {q}, sr: {sr}")
 
-    # Use direct API endpoint
-    api_url = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
+    # Use direct API endpoint - updated to /general
+    api_url = f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={sr}"
     print(f"Catalog API URL: {api_url}")
 
     # Get proper headers for API requests
@@ -200,8 +200,8 @@ async def proxy_nav(
 
     print(f"Nav request - q: {q}, inav: {inav}, count: {count}, cursor: {cursor}")
 
-    # Use direct API endpoint - same as catalog but with inav parameter
-    api_url = f"https://api.encar.com/search/car/list/mobile?count={count}&q={q}&inav={inav}&cursor={cursor}"
+    # Use direct API endpoint - updated to /general with inav parameter
+    api_url = f"https://api.encar.com/search/car/list/general?count={count}&q={q}&inav={inav}&cursor={cursor}"
     print(f"Nav API URL: {api_url}")
 
     # Get proper headers for API requests
