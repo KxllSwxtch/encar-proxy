@@ -71,7 +71,6 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
 
         # Use httpx with explicit proxy disabling
         async with httpx.AsyncClient(
-            proxies={},  # Disable proxy
             trust_env=False,  # Don't trust environment
             timeout=30.0,
             follow_redirects=True,
@@ -177,7 +176,6 @@ async def proxy_nav(
 
         # Use httpx with explicit proxy disabling
         async with httpx.AsyncClient(
-            proxies={},  # Disable proxy
             trust_env=False,  # Don't trust environment
             timeout=30.0,
             follow_redirects=True,
