@@ -1,0 +1,394 @@
+{
+  "Count": 36049,
+  "SearchResults": [
+    {
+      "Id": "39547021",
+      "Separation": ["B"],
+      "Trust": ["HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture03/pic3953/39537671_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture03/pic3953/39537671_001.jpg",
+          "updatedDate": "2025-04-29T00:40:39Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture03/pic3953/39537671_003.jpg",
+          "updatedDate": "2025-04-29T00:40:39Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture03/pic3953/39537671_004.jpg",
+          "updatedDate": "2025-04-29T00:40:39Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture03/pic3953/39537671_007.jpg",
+          "updatedDate": "2025-04-29T00:40:39Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "BMW",
+      "Model": "X3 (G01)",
+      "Badge": "xDrive 20i",
+      "GreenType": "N",
+      "FuelType": "가솔린",
+      "Year": 202202.0,
+      "FormYear": "2022",
+      "Mileage": 69280.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 5570.0,
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "경기"
+    },
+    {
+      "Id": "39493176",
+      "Separation": ["B"],
+      "Trust": ["HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture09/pic3949/39490761_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture09/pic3949/39490761_001.jpg",
+          "updatedDate": "2025-04-21T06:16:40Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture09/pic3949/39490761_003.jpg",
+          "updatedDate": "2025-04-21T06:16:40Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture09/pic3949/39490761_004.jpg",
+          "updatedDate": "2025-04-21T06:16:40Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture09/pic3949/39490761_007.jpg",
+          "updatedDate": "2025-04-21T06:16:40Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "제네시스",
+      "Model": "EQ900",
+      "Badge": "3.8 GDI AWD",
+      "BadgeDetail": "럭셔리",
+      "GreenType": "N",
+      "FuelType": "가솔린",
+      "Year": 201801.0,
+      "FormYear": "2018",
+      "Mileage": 84203.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 2620.0,
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "서울"
+    },
+    {
+      "Id": "39472787",
+      "Separation": ["B"],
+      "Trust": ["HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture06/pic3946/39464322_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture06/pic3946/39464322_001.jpg",
+          "updatedDate": "2025-04-17T08:06:48Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture06/pic3946/39464322_003.jpg",
+          "updatedDate": "2025-04-17T08:06:48Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture06/pic3946/39464322_004.jpg",
+          "updatedDate": "2025-04-17T08:06:48Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture06/pic3946/39464322_007.jpg",
+          "updatedDate": "2025-04-17T08:06:48Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "BMW",
+      "Model": "X6 (G06)",
+      "Badge": "xDrive40i M 스포츠",
+      "GreenType": "N",
+      "FuelType": "가솔린",
+      "Year": 202212.0,
+      "FormYear": "2022",
+      "Mileage": 33224.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 9990.0,
+      "SalesStatus": "CONTRACT",
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "서울"
+    },
+    {
+      "Id": "39489184",
+      "Separation": ["B"],
+      "Trust": ["HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture08/pic3948/39481101_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture08/pic3948/39481101_001.jpg",
+          "updatedDate": "2025-04-21T01:10:51Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture08/pic3948/39481101_003.jpg",
+          "updatedDate": "2025-04-21T01:10:51Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture08/pic3948/39481101_004.jpg",
+          "updatedDate": "2025-04-21T01:10:51Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture08/pic3948/39481101_007.jpg",
+          "updatedDate": "2025-04-21T01:10:51Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "벤츠",
+      "Model": "A-클래스 W177",
+      "Badge": "A220 세단",
+      "GreenType": "N",
+      "FuelType": "가솔린",
+      "Year": 202104.0,
+      "FormYear": "2021",
+      "Mileage": 53798.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 9999.0,
+      "SalesStatus": "CONTRACT",
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "서울"
+    },
+    {
+      "Id": "38945162",
+      "Separation": ["B"],
+      "Trust": ["HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture04/pic3894/38943991_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture04/pic3894/38943991_001.jpg",
+          "updatedDate": "2025-01-24T01:37:48Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture04/pic3894/38943991_003.jpg",
+          "updatedDate": "2025-01-24T01:37:48Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture04/pic3894/38943991_004.jpg",
+          "updatedDate": "2025-01-24T01:37:48Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture04/pic3894/38943991_007.jpg",
+          "updatedDate": "2025-01-24T01:37:48Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "BMW",
+      "Model": "X4 (F26)",
+      "Badge": "xDrive20d SAC 에디션",
+      "GreenType": "N",
+      "FuelType": "디젤",
+      "Year": 201704.0,
+      "FormYear": "2017",
+      "Mileage": 109205.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 2299.0,
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "서울"
+    },
+    {
+      "Id": "39197398",
+      "Separation": ["B"],
+      "Trust": ["ExtendWarranty", "Compensate", "HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture07/pic3917/39177344_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture07/pic3917/39177344_001.jpg",
+          "updatedDate": "2025-03-10T07:37:44Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture07/pic3917/39177344_003.jpg",
+          "updatedDate": "2025-03-10T07:37:44Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture07/pic3917/39177344_004.jpg",
+          "updatedDate": "2025-03-10T07:37:44Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture07/pic3917/39177344_007.jpg",
+          "updatedDate": "2025-03-10T07:37:44Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "르노코리아(삼성)",
+      "Model": "SM3 네오",
+      "Badge": "LE",
+      "GreenType": "N",
+      "FuelType": "가솔린",
+      "Year": 201803.0,
+      "FormYear": "2018",
+      "Mileage": 11579.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 999.0,
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "경기"
+    },
+    {
+      "Id": "39298476",
+      "Separation": ["B"],
+      "Trust": ["ExtendWarranty", "HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture09/pic3929/39294695_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture09/pic3929/39294695_001.jpg",
+          "updatedDate": "2025-03-24T07:15:02Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture09/pic3929/39294695_003.jpg",
+          "updatedDate": "2025-03-24T07:15:02Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture09/pic3929/39294695_004.jpg",
+          "updatedDate": "2025-03-24T07:15:02Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture09/pic3929/39294695_007.jpg",
+          "updatedDate": "2025-03-24T07:15:02Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "기아",
+      "Model": "모닝 어반 (JA)",
+      "Badge": "밴",
+      "BadgeDetail": "스페셜",
+      "GreenType": "N",
+      "FuelType": "가솔린",
+      "Year": 202009.0,
+      "FormYear": "2021",
+      "Mileage": 46576.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 760.0,
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "경기"
+    },
+    {
+      "Id": "39311964",
+      "Separation": ["B"],
+      "Trust": ["HomeService"],
+      "ServiceMark": ["EncarMeetgo", "EncarDiagnosisP1"],
+      "Condition": ["Inspection", "Record", "Resume"],
+      "Photo": "/carpicture10/pic3930/39301010_",
+      "Photos": [
+        {
+          "type": "001",
+          "location": "/carpicture10/pic3930/39301010_001.jpg",
+          "updatedDate": "2025-03-26T01:13:42Z",
+          "ordering": 1.0
+        },
+        {
+          "type": "003",
+          "location": "/carpicture10/pic3930/39301010_003.jpg",
+          "updatedDate": "2025-03-26T01:13:42Z",
+          "ordering": 3.0
+        },
+        {
+          "type": "004",
+          "location": "/carpicture10/pic3930/39301010_004.jpg",
+          "updatedDate": "2025-03-26T01:13:42Z",
+          "ordering": 4.0
+        },
+        {
+          "type": "007",
+          "location": "/carpicture10/pic3930/39301010_007.jpg",
+          "updatedDate": "2025-03-26T01:13:42Z",
+          "ordering": 7.0
+        }
+      ],
+      "Manufacturer": "테슬라",
+      "Model": "모델 Y",
+      "Badge": "RWD",
+      "GreenType": "Y",
+      "EvType": "전기차",
+      "FuelType": "전기",
+      "Year": 202409.0,
+      "FormYear": "2024",
+      "Mileage": 16505.0,
+      "HomeServiceVerification": "Y",
+      "ServiceCopyCar": "DUPLICATION",
+      "Price": 4450.0,
+      "SellType": "일반",
+      "BuyType": ["Delivery"],
+      "OfficeCityState": "서울"
+    }
+  ]
+}

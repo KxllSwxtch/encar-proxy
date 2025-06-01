@@ -59,19 +59,13 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
 
     print(f"Catalog request - q: {q}, sr: {sr}")
 
-    # Properly encode parameters for the URL
-    from urllib.parse import quote
-
-    encoded_q = quote(q, safe="()._")  # Keep safe characters unencoded
-    encoded_sr = quote(sr, safe="|")  # Keep pipe characters
+    # Don't over-encode - use params in httpx which handles encoding properly
+    params = {"count": "true", "q": q, "sr": sr}
 
     # Use direct API endpoint - updated to /general
-    api_url = f"https://api.encar.com/search/car/list/general?count=true&q={encoded_q}&sr={encoded_sr}"
+    api_url = "https://api.encar.com/search/car/list/general"
     print(f"Catalog API URL: {api_url}")
-    print(f"Original q: {q}")
-    print(f"Encoded q: {encoded_q}")
-    print(f"Original sr: {sr}")
-    print(f"Encoded sr: {encoded_sr}")
+    print(f"Catalog params: {params}")
 
     # Get proper headers for API requests
     headers = get_api_headers()
@@ -86,7 +80,7 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
             follow_redirects=True,
             verify=True,
         ) as client:
-            response = await client.get(api_url, headers=headers)
+            response = await client.get(api_url, headers=headers, params=params)
 
         print(f"Catalog httpx response status code: {response.status_code}")
 
@@ -179,20 +173,13 @@ async def proxy_nav(
 
     print(f"Nav request - q: {q}, inav: {inav}, count: {count}, cursor: {cursor}")
 
-    # Properly encode parameters for the URL
-    from urllib.parse import quote
-
-    encoded_q = quote(q, safe="()._")  # Keep safe characters unencoded
-    encoded_inav = quote(inav, safe="|")  # Keep pipe characters
-    encoded_cursor = quote(cursor, safe="") if cursor else cursor
+    # Don't over-encode - use params in httpx which handles encoding properly
+    params = {"count": count, "q": q, "inav": inav, "cursor": cursor}
 
     # Use direct API endpoint - updated to /general with inav parameter
-    api_url = f"https://api.encar.com/search/car/list/general?count={count}&q={encoded_q}&inav={encoded_inav}&cursor={encoded_cursor}"
+    api_url = "https://api.encar.com/search/car/list/general"
     print(f"Nav API URL: {api_url}")
-    print(f"Original q: {q}")
-    print(f"Encoded q: {encoded_q}")
-    print(f"Original inav: {inav}")
-    print(f"Encoded inav: {encoded_inav}")
+    print(f"Nav params: {params}")
 
     # Get proper headers for API requests
     headers = get_api_headers()
@@ -207,7 +194,7 @@ async def proxy_nav(
             follow_redirects=True,
             verify=True,
         ) as client:
-            response = await client.get(api_url, headers=headers)
+            response = await client.get(api_url, headers=headers, params=params)
 
         print(f"Nav httpx response status code: {response.status_code}")
 
