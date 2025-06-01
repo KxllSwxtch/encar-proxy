@@ -1,8 +1,19 @@
+import random
+import urllib.parse
 import requests  # Use requests instead of httpx
 import asyncio  # For running requests in a thread pool
+import os  # For environment variables
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+# Disable proxy environment variables
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
+os.environ["http_proxy"] = ""
+os.environ["https_proxy"] = ""
+os.environ["NO_PROXY"] = "*"
+os.environ["no_proxy"] = "*"
 
 app = FastAPI()
 
@@ -60,12 +71,15 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         def make_request(url):
             try:
                 print(f"Making catalog request to: {url}")
-                # Disable automatic proxy detection
-                response = requests.get(
+                # Create session with disabled environment trust
+                session = requests.Session()
+                session.trust_env = False  # Disable reading proxy from environment
+                session.proxies = {}  # Explicitly disable proxy
+
+                response = session.get(
                     url,
                     headers=headers,
                     timeout=30.0,
-                    proxies={},  # Disable proxy
                     allow_redirects=True,
                     verify=True,
                 )
@@ -198,12 +212,15 @@ async def proxy_nav(
         def make_request(url):
             try:
                 print(f"Making nav request to: {url}")
-                # Disable automatic proxy detection
-                response = requests.get(
+                # Create session with disabled environment trust
+                session = requests.Session()
+                session.trust_env = False  # Disable reading proxy from environment
+                session.proxies = {}  # Explicitly disable proxy
+
+                response = session.get(
                     url,
                     headers=headers,
                     timeout=30.0,
-                    proxies={},  # Disable proxy
                     allow_redirects=True,
                     verify=True,
                 )
