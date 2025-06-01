@@ -1,6 +1,6 @@
 import random
 import urllib.parse
-import requests  # Use requests instead of httpx
+import httpx  # Use httpx instead of requests
 import asyncio  # For running requests in a thread pool
 import os  # For environment variables
 from fastapi import FastAPI, Query
@@ -67,66 +67,31 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     headers = get_api_headers()
 
     try:
-        # Define a function to make a synchronous request using requests
-        def make_request(url):
-            try:
-                print(f"Making catalog request to: {url}")
-                # Create session with disabled environment trust
-                session = requests.Session()
-                session.trust_env = False  # Disable reading proxy from environment
-                session.proxies = {}  # Explicitly disable proxy
+        print(f"Making catalog request with httpx to: {api_url}")
 
-                response = session.get(
-                    url,
-                    headers=headers,
-                    timeout=30.0,
-                    allow_redirects=True,
-                    verify=True,
-                )
-                return {
-                    "success": True,
-                    "status_code": response.status_code,
-                    "text": response.text,
-                    "url": url,
-                }
-            except Exception as e:
-                print(f"Catalog request error: {str(e)}")
-                return {"success": False, "error": str(e), "url": url}
+        # Use httpx with explicit proxy disabling
+        async with httpx.AsyncClient(
+            proxies={},  # Disable proxy
+            trust_env=False,  # Don't trust environment
+            timeout=30.0,
+            follow_redirects=True,
+            verify=True,
+        ) as client:
+            response = await client.get(api_url, headers=headers)
 
-        # Make the API request
-        loop = asyncio.get_event_loop()
-        response_data = await loop.run_in_executor(None, lambda: make_request(api_url))
-
-        if not response_data["success"]:
-            print(f"Catalog API request failed: {response_data['error']}")
-            attempts.append(
-                {"url": response_data["url"], "error": response_data["error"]}
-            )
-            return JSONResponse(
-                status_code=502,
-                content={
-                    "error": f"Catalog API request failed: {response_data['error']}",
-                    "attempts": attempts,
-                },
-            )
-
-        status_code = response_data["status_code"]
-        response_text = response_data["text"]
-        print(f"Catalog API response status code: {status_code}")
+        print(f"Catalog httpx response status code: {response.status_code}")
 
         attempts.append(
             {
-                "url": response_data["url"],
-                "status_code": status_code,
-                "content_length": len(response_text) if response_text else 0,
+                "url": api_url,
+                "status_code": response.status_code,
+                "content_length": len(response.text) if response.text else 0,
             }
         )
 
-        if status_code == 200:
+        if response.status_code == 200:
             try:
-                import json
-
-                if not response_text or response_text.strip() == "":
+                if not response.text or response.text.strip() == "":
                     print(f"Empty response from catalog API")
                     return JSONResponse(
                         status_code=502,
@@ -137,42 +102,42 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                     )
 
                 print(
-                    f"Catalog response text sample: {response_text[:200] if response_text else 'Empty'}"
+                    f"Catalog response text sample: {response.text[:200] if response.text else 'Empty'}"
                 )
 
                 # Check if response is HTML instead of JSON
-                if response_text.strip().startswith(
+                if response.text.strip().startswith(
                     "<!DOCTYPE html>"
-                ) or response_text.strip().startswith("<html"):
+                ) or response.text.strip().startswith("<html"):
                     print(f"Received HTML instead of JSON from catalog API")
                     return JSONResponse(
                         status_code=502,
                         content={
                             "error": "Received HTML instead of JSON from catalog API",
                             "attempts": attempts,
-                            "preview": response_text[:500],
+                            "preview": response.text[:500],
                         },
                     )
 
-                json_data = json.loads(response_text)
+                json_data = response.json()
                 return json_data
             except Exception as e:
                 print(f"Catalog JSON decode error: {str(e)}")
-                print(f"Catalog response text: {response_text[:500]}")
+                print(f"Catalog response text: {response.text[:500]}")
                 return JSONResponse(
                     status_code=502,
                     content={
                         "error": f"Failed to decode catalog JSON: {str(e)}",
                         "attempts": attempts,
-                        "preview": response_text[:500],
+                        "preview": response.text[:500],
                     },
                 )
 
         # If we get here, the request did not return 200
         return JSONResponse(
-            status_code=status_code,
+            status_code=response.status_code,
             content={
-                "error": f"Catalog API returned non-200 status: {status_code}",
+                "error": f"Catalog API returned non-200 status: {response.status_code}",
                 "attempts": attempts,
             },
         )
@@ -208,66 +173,31 @@ async def proxy_nav(
     headers = get_api_headers()
 
     try:
-        # Define a function to make a synchronous request using requests
-        def make_request(url):
-            try:
-                print(f"Making nav request to: {url}")
-                # Create session with disabled environment trust
-                session = requests.Session()
-                session.trust_env = False  # Disable reading proxy from environment
-                session.proxies = {}  # Explicitly disable proxy
+        print(f"Making nav request with httpx to: {api_url}")
 
-                response = session.get(
-                    url,
-                    headers=headers,
-                    timeout=30.0,
-                    allow_redirects=True,
-                    verify=True,
-                )
-                return {
-                    "success": True,
-                    "status_code": response.status_code,
-                    "text": response.text,
-                    "url": url,
-                }
-            except Exception as e:
-                print(f"Nav request error: {str(e)}")
-                return {"success": False, "error": str(e), "url": url}
+        # Use httpx with explicit proxy disabling
+        async with httpx.AsyncClient(
+            proxies={},  # Disable proxy
+            trust_env=False,  # Don't trust environment
+            timeout=30.0,
+            follow_redirects=True,
+            verify=True,
+        ) as client:
+            response = await client.get(api_url, headers=headers)
 
-        # Make the API request
-        loop = asyncio.get_event_loop()
-        response_data = await loop.run_in_executor(None, lambda: make_request(api_url))
-
-        if not response_data["success"]:
-            print(f"Nav API request failed: {response_data['error']}")
-            attempts.append(
-                {"url": response_data["url"], "error": response_data["error"]}
-            )
-            return JSONResponse(
-                status_code=502,
-                content={
-                    "error": f"Nav API request failed: {response_data['error']}",
-                    "attempts": attempts,
-                },
-            )
-
-        status_code = response_data["status_code"]
-        response_text = response_data["text"]
-        print(f"Nav API response status code: {status_code}")
+        print(f"Nav httpx response status code: {response.status_code}")
 
         attempts.append(
             {
-                "url": response_data["url"],
-                "status_code": status_code,
-                "content_length": len(response_text) if response_text else 0,
+                "url": api_url,
+                "status_code": response.status_code,
+                "content_length": len(response.text) if response.text else 0,
             }
         )
 
-        if status_code == 200:
+        if response.status_code == 200:
             try:
-                import json
-
-                if not response_text or response_text.strip() == "":
+                if not response.text or response.text.strip() == "":
                     print(f"Empty response from nav API")
                     return JSONResponse(
                         status_code=502,
@@ -278,42 +208,42 @@ async def proxy_nav(
                     )
 
                 print(
-                    f"Nav response text sample: {response_text[:200] if response_text else 'Empty'}"
+                    f"Nav response text sample: {response.text[:200] if response.text else 'Empty'}"
                 )
 
                 # Check if response is HTML instead of JSON
-                if response_text.strip().startswith(
+                if response.text.strip().startswith(
                     "<!DOCTYPE html>"
-                ) or response_text.strip().startswith("<html"):
+                ) or response.text.strip().startswith("<html"):
                     print(f"Received HTML instead of JSON from nav API")
                     return JSONResponse(
                         status_code=502,
                         content={
                             "error": "Received HTML instead of JSON from nav API",
                             "attempts": attempts,
-                            "preview": response_text[:500],
+                            "preview": response.text[:500],
                         },
                     )
 
-                json_data = json.loads(response_text)
+                json_data = response.json()
                 return json_data
             except Exception as e:
                 print(f"Nav JSON decode error: {str(e)}")
-                print(f"Nav response text: {response_text[:500]}")
+                print(f"Nav response text: {response.text[:500]}")
                 return JSONResponse(
                     status_code=502,
                     content={
                         "error": f"Failed to decode nav JSON: {str(e)}",
                         "attempts": attempts,
-                        "preview": response_text[:500],
+                        "preview": response.text[:500],
                     },
                 )
 
         # If we get here, the request did not return 200
         return JSONResponse(
-            status_code=status_code,
+            status_code=response.status_code,
             content={
-                "error": f"Nav API returned non-200 status: {status_code}",
+                "error": f"Nav API returned non-200 status: {response.status_code}",
                 "attempts": attempts,
             },
         )
