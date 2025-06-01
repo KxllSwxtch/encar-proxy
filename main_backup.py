@@ -16,47 +16,39 @@ app.add_middleware(
 )
 
 
-# Headers matching real API requests
-def get_api_headers():
-    return {
-        "accept": "application/json, text/plain, */*",
-        "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
-        "origin": "https://car.encar.com",
-        "priority": "u=1, i",
-        "referer": "https://car.encar.com/",
-        "sec-ch-ua": '"Chromium";v="136", "Google Chrome";v="136", "Not.A/Brand";v="99"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    }
-
-
 @app.get("/api/catalog")
 async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
-    """
-    Proxy endpoint for /api/catalog requests
-    Uses api.encar.com search endpoint for catalog data
-    """
     # Keep track of all attempts
     attempts = []
 
-    print(f"Catalog request - q: {q}, sr: {sr}")
+    # Manually ensure the pipe characters are encoded properly
+    encoded_sr = sr.replace("|", "%7C")
+    print(f"Original sr: {sr}")
+    print(f"Encoded sr: {encoded_sr}")
 
-    # Use direct API endpoint
-    api_url = f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={sr}"
-    print(f"Catalog API URL: {api_url}")
+    # Use the proxy endpoint instead of direct API access
+    proxy_url = (
+        f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}"
+    )
+    print(f"Proxy URL: {proxy_url}")
 
-    # Get proper headers for API requests
-    headers = get_api_headers()
+    # Backup URL if the first one fails
+    backup_proxy_url = (
+        f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={sr}"
+    )
+    print(f"Backup URL: {backup_proxy_url}")
+
+    # Simple headers for proxy request
+    headers = {
+        "accept": "application/json",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    }
 
     try:
         # Define a function to make a synchronous request using requests
         def make_request(url):
             try:
-                print(f"Making catalog request to: {url}")
+                print(f"Making request to: {url}")
                 response = requests.get(url, headers=headers, timeout=30.0)
                 return {
                     "success": True,
@@ -65,29 +57,38 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                     "url": url,
                 }
             except Exception as e:
-                print(f"Catalog request error: {str(e)}")
+                print(f"Request error: {str(e)}")
                 return {"success": False, "error": str(e), "url": url}
 
-        # Make the API request
+        # Try first the primary proxy URL
         loop = asyncio.get_event_loop()
-        response_data = await loop.run_in_executor(None, lambda: make_request(api_url))
+        response_data = await loop.run_in_executor(
+            None, lambda: make_request(proxy_url)
+        )
+
+        # If first request fails, try the backup URL
+        if not response_data["success"] or response_data["status_code"] != 200:
+            print(f"First proxy attempt failed. Trying backup URL...")
+            response_data = await loop.run_in_executor(
+                None, lambda: make_request(backup_proxy_url)
+            )
 
         if not response_data["success"]:
-            print(f"Catalog API request failed: {response_data['error']}")
+            print(f"Proxy request failed: {response_data['error']}")
             attempts.append(
                 {"url": response_data["url"], "error": response_data["error"]}
             )
             return JSONResponse(
                 status_code=502,
                 content={
-                    "error": f"Catalog API request failed: {response_data['error']}",
+                    "error": f"Proxy request failed: {response_data['error']}",
                     "attempts": attempts,
                 },
             )
 
         status_code = response_data["status_code"]
         response_text = response_data["text"]
-        print(f"Catalog API response status code: {status_code}")
+        print(f"Proxy response status code: {status_code}")
 
         attempts.append(
             {
@@ -102,28 +103,28 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                 import json
 
                 if not response_text or response_text.strip() == "":
-                    print(f"Empty response from catalog API")
+                    print(f"Empty response from proxy")
                     return JSONResponse(
                         status_code=502,
                         content={
-                            "error": "Empty response from catalog API",
+                            "error": "Empty response from proxy",
                             "attempts": attempts,
                         },
                     )
 
                 print(
-                    f"Catalog response text sample: {response_text[:200] if response_text else 'Empty'}"
+                    f"Response text sample: {response_text[:200] if response_text else 'Empty'}"
                 )
 
                 # Check if response is HTML instead of JSON
                 if response_text.strip().startswith(
                     "<!DOCTYPE html>"
                 ) or response_text.strip().startswith("<html"):
-                    print(f"Received HTML instead of JSON from catalog API")
+                    print(f"Received HTML instead of JSON from proxy")
                     return JSONResponse(
                         status_code=502,
                         content={
-                            "error": "Received HTML instead of JSON from catalog API",
+                            "error": "Received HTML instead of JSON from proxy",
                             "attempts": attempts,
                             "preview": response_text[:500],
                         },
@@ -132,12 +133,12 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                 json_data = json.loads(response_text)
                 return json_data
             except Exception as e:
-                print(f"Catalog JSON decode error: {str(e)}")
-                print(f"Catalog response text: {response_text[:500]}")
+                print(f"JSON decode error: {str(e)}")
+                print(f"Response text: {response_text[:500]}")
                 return JSONResponse(
                     status_code=502,
                     content={
-                        "error": f"Failed to decode catalog JSON: {str(e)}",
+                        "error": f"Failed to decode JSON: {str(e)}",
                         "attempts": attempts,
                         "preview": response_text[:500],
                     },
@@ -147,40 +148,52 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         return JSONResponse(
             status_code=status_code,
             content={
-                "error": f"Catalog API returned non-200 status: {status_code}",
+                "error": f"Proxy returned non-200 status: {status_code}",
                 "attempts": attempts,
             },
         )
     except Exception as e:
-        print(f"Unexpected catalog error: {str(e)}")
+        print(f"Unexpected error: {str(e)}")
         return JSONResponse(
-            status_code=502,
-            content={"error": f"Failed to connect to catalog API: {str(e)}"},
+            status_code=502, content={"error": f"Failed to connect to proxy: {str(e)}"}
         )
 
 
 @app.get("/api/nav")
 async def proxy_nav(
-    q: str = Query(...),
-    inav: str = Query(...),
-    count: str = Query(default="true"),
-    cursor: str = Query(default=""),
+    q: str = Query(...), inav: str = Query(...), count: str = Query(default="true")
 ):
     """
     Proxy endpoint for /api/nav requests
-    Uses api.encar.com search endpoint for navigation data
+    Handles navigation API calls with proper parameter encoding
     """
     # Keep track of all attempts
     attempts = []
 
-    print(f"Nav request - q: {q}, inav: {inav}, count: {count}, cursor: {cursor}")
+    # Manually ensure special characters are encoded properly
+    encoded_q = q.replace("|", "%7C")
+    encoded_inav = inav.replace("|", "%7C")
 
-    # Use direct API endpoint - same as catalog but with inav parameter
-    api_url = f"https://api.encar.com/search/car/list/mobile?count={count}&q={q}&inav={inav}&cursor={cursor}"
-    print(f"Nav API URL: {api_url}")
+    print(f"Original q: {q}")
+    print(f"Encoded q: {encoded_q}")
+    print(f"Original inav: {inav}")
+    print(f"Encoded inav: {encoded_inav}")
 
-    # Get proper headers for API requests
-    headers = get_api_headers()
+    # Use the proxy endpoint for nav API
+    proxy_url = f"https://encar-proxy.habsida.net/api/nav?count={count}&q={encoded_q}&inav={encoded_inav}"
+    print(f"Nav Proxy URL: {proxy_url}")
+
+    # Backup URL if the first one fails
+    backup_proxy_url = (
+        f"https://encar-proxy.habsida.net/api/nav?count={count}&q={q}&inav={inav}"
+    )
+    print(f"Nav Backup URL: {backup_proxy_url}")
+
+    # Headers for proxy request
+    headers = {
+        "accept": "application/json",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    }
 
     try:
         # Define a function to make a synchronous request using requests
@@ -198,26 +211,35 @@ async def proxy_nav(
                 print(f"Nav request error: {str(e)}")
                 return {"success": False, "error": str(e), "url": url}
 
-        # Make the API request
+        # Try first the primary proxy URL
         loop = asyncio.get_event_loop()
-        response_data = await loop.run_in_executor(None, lambda: make_request(api_url))
+        response_data = await loop.run_in_executor(
+            None, lambda: make_request(proxy_url)
+        )
+
+        # If first request fails, try the backup URL
+        if not response_data["success"] or response_data["status_code"] != 200:
+            print(f"First nav proxy attempt failed. Trying backup URL...")
+            response_data = await loop.run_in_executor(
+                None, lambda: make_request(backup_proxy_url)
+            )
 
         if not response_data["success"]:
-            print(f"Nav API request failed: {response_data['error']}")
+            print(f"Nav proxy request failed: {response_data['error']}")
             attempts.append(
                 {"url": response_data["url"], "error": response_data["error"]}
             )
             return JSONResponse(
                 status_code=502,
                 content={
-                    "error": f"Nav API request failed: {response_data['error']}",
+                    "error": f"Nav proxy request failed: {response_data['error']}",
                     "attempts": attempts,
                 },
             )
 
         status_code = response_data["status_code"]
         response_text = response_data["text"]
-        print(f"Nav API response status code: {status_code}")
+        print(f"Nav proxy response status code: {status_code}")
 
         attempts.append(
             {
@@ -232,11 +254,11 @@ async def proxy_nav(
                 import json
 
                 if not response_text or response_text.strip() == "":
-                    print(f"Empty response from nav API")
+                    print(f"Empty response from nav proxy")
                     return JSONResponse(
                         status_code=502,
                         content={
-                            "error": "Empty response from nav API",
+                            "error": "Empty response from nav proxy",
                             "attempts": attempts,
                         },
                     )
@@ -249,11 +271,11 @@ async def proxy_nav(
                 if response_text.strip().startswith(
                     "<!DOCTYPE html>"
                 ) or response_text.strip().startswith("<html"):
-                    print(f"Received HTML instead of JSON from nav API")
+                    print(f"Received HTML instead of JSON from nav proxy")
                     return JSONResponse(
                         status_code=502,
                         content={
-                            "error": "Received HTML instead of JSON from nav API",
+                            "error": "Received HTML instead of JSON from nav proxy",
                             "attempts": attempts,
                             "preview": response_text[:500],
                         },
@@ -277,7 +299,7 @@ async def proxy_nav(
         return JSONResponse(
             status_code=status_code,
             content={
-                "error": f"Nav API returned non-200 status: {status_code}",
+                "error": f"Nav proxy returned non-200 status: {status_code}",
                 "attempts": attempts,
             },
         )
@@ -285,5 +307,5 @@ async def proxy_nav(
         print(f"Unexpected nav error: {str(e)}")
         return JSONResponse(
             status_code=502,
-            content={"error": f"Failed to connect to nav API: {str(e)}"},
+            content={"error": f"Failed to connect to nav proxy: {str(e)}"},
         )
