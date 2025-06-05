@@ -1,5 +1,6 @@
 import requests  # Use requests instead of httpx
 import asyncio  # For running requests in a thread pool
+import json
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -26,30 +27,56 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     print(f"Original sr: {sr}")
     print(f"Encoded sr: {encoded_sr}")
 
-    # Use the proxy endpoint instead of direct API access
-    proxy_url = (
+    # Try direct API calls using proxy
+    url1 = (
+        f"https://api.encar.com/search/car/list/mobile?count=true&q={q}&sr={encoded_sr}"
+    )
+    url2 = f"https://api.encar.com/search/car/list/general?count=true&q={q}&sr={encoded_sr}"
+    url3 = (
         f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={encoded_sr}"
     )
-    print(f"Proxy URL: {proxy_url}")
 
-    # Backup URL if the first one fails
-    backup_proxy_url = (
-        f"https://encar-proxy.habsida.net/api/catalog?count=true&q={q}&sr={sr}"
-    )
-    print(f"Backup URL: {backup_proxy_url}")
+    print(f"URL 1: {url1}")
+    print(f"URL 2: {url2}")
+    print(f"URL 3: {url3}")
 
-    # Simple headers for proxy request
+    # Setup proxy configuration
+    proxy_config = {
+        "http": "http://B01vby:GBno0x@45.118.250.2:8000",
+        "https": "http://B01vby:GBno0x@45.118.250.2:8000",
+    }
+
+    # Headers for Encar API
     headers = {
-        "accept": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Origin": "https://m.encar.com",
+        "Referer": "https://m.encar.com/",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 12; SM-S906N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36",
+    }
+
+    # Essential cookies
+    cookies = {
+        "PCID": "17422557868404555606353",
+        "PERSISTENT_USERTYPE": "1",
+        "wcs_bt": "4b4e532670e38c:1744590425",
     }
 
     try:
-        # Define a function to make a synchronous request using requests
-        def make_request(url):
+        # Define a function to make a synchronous request using requests with proxy
+        def make_request(url, use_cookies=True):
             try:
                 print(f"Making request to: {url}")
-                response = requests.get(url, headers=headers, timeout=30.0)
+                request_cookies = cookies if use_cookies else None
+                response = requests.get(
+                    url,
+                    headers=headers,
+                    cookies=request_cookies,
+                    proxies=proxy_config,
+                    timeout=30.0,
+                    verify=True,
+                )
                 return {
                     "success": True,
                     "status_code": response.status_code,
@@ -60,102 +87,75 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                 print(f"Request error: {str(e)}")
                 return {"success": False, "error": str(e), "url": url}
 
-        # Try first the primary proxy URL
+        # Try all URLs in sequence
+        urls = [url1, url2, url3]
         loop = asyncio.get_event_loop()
-        response_data = await loop.run_in_executor(
-            None, lambda: make_request(proxy_url)
-        )
 
-        # If first request fails, try the backup URL
-        if not response_data["success"] or response_data["status_code"] != 200:
-            print(f"First proxy attempt failed. Trying backup URL...")
+        for i, url in enumerate(urls, 1):
+            print(f"Attempt {i}: Trying {url}")
+
+            # For the habsida proxy (url3), don't use cookies
+            use_cookies = i != 3
+
             response_data = await loop.run_in_executor(
-                None, lambda: make_request(backup_proxy_url)
+                None, lambda u=url, uc=use_cookies: make_request(u, uc)
             )
 
-        if not response_data["success"]:
-            print(f"Proxy request failed: {response_data['error']}")
             attempts.append(
-                {"url": response_data["url"], "error": response_data["error"]}
+                {
+                    "url": response_data["url"],
+                    "success": response_data["success"],
+                    "status_code": response_data.get("status_code"),
+                    "error": response_data.get("error"),
+                    "content_length": (
+                        len(response_data.get("text", ""))
+                        if response_data.get("text")
+                        else 0
+                    ),
+                }
             )
-            return JSONResponse(
-                status_code=502,
-                content={
-                    "error": f"Proxy request failed: {response_data['error']}",
-                    "attempts": attempts,
-                },
-            )
 
-        status_code = response_data["status_code"]
-        response_text = response_data["text"]
-        print(f"Proxy response status code: {status_code}")
+            if response_data["success"] and response_data["status_code"] == 200:
+                try:
+                    response_text = response_data["text"]
 
-        attempts.append(
-            {
-                "url": response_data["url"],
-                "status_code": status_code,
-                "content_length": len(response_text) if response_text else 0,
-            }
-        )
+                    if not response_text or response_text.strip() == "":
+                        print(f"Empty response from attempt {i}")
+                        continue
 
-        if status_code == 200:
-            try:
-                import json
-
-                if not response_text or response_text.strip() == "":
-                    print(f"Empty response from proxy")
-                    return JSONResponse(
-                        status_code=502,
-                        content={
-                            "error": "Empty response from proxy",
-                            "attempts": attempts,
-                        },
+                    print(
+                        f"Response sample: {response_text[:200] if response_text else 'Empty'}"
                     )
 
+                    # Check if response is HTML instead of JSON
+                    if response_text.strip().startswith(
+                        "<!DOCTYPE html>"
+                    ) or response_text.strip().startswith("<html"):
+                        print(f"Received HTML instead of JSON from attempt {i}")
+                        continue
+
+                    json_data = json.loads(response_text)
+                    print(f"Successfully got JSON from attempt {i}")
+                    return json_data
+
+                except Exception as e:
+                    print(f"JSON decode error on attempt {i}: {str(e)}")
+                    continue
+            else:
                 print(
-                    f"Response text sample: {response_text[:200] if response_text else 'Empty'}"
+                    f"Attempt {i} failed: Status {response_data.get('status_code')}, Error: {response_data.get('error')}"
                 )
 
-                # Check if response is HTML instead of JSON
-                if response_text.strip().startswith(
-                    "<!DOCTYPE html>"
-                ) or response_text.strip().startswith("<html"):
-                    print(f"Received HTML instead of JSON from proxy")
-                    return JSONResponse(
-                        status_code=502,
-                        content={
-                            "error": "Received HTML instead of JSON from proxy",
-                            "attempts": attempts,
-                            "preview": response_text[:500],
-                        },
-                    )
-
-                json_data = json.loads(response_text)
-                return json_data
-            except Exception as e:
-                print(f"JSON decode error: {str(e)}")
-                print(f"Response text: {response_text[:500]}")
-                return JSONResponse(
-                    status_code=502,
-                    content={
-                        "error": f"Failed to decode JSON: {str(e)}",
-                        "attempts": attempts,
-                        "preview": response_text[:500],
-                    },
-                )
-
-        # If we get here, the request did not return 200
+        # If we get here, all attempts failed
         return JSONResponse(
-            status_code=status_code,
-            content={
-                "error": f"Proxy returned non-200 status: {status_code}",
-                "attempts": attempts,
-            },
+            status_code=502,
+            content={"error": "All API attempts failed", "attempts": attempts},
         )
+
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
         return JSONResponse(
-            status_code=502, content={"error": f"Failed to connect to proxy: {str(e)}"}
+            status_code=502, content={"error": f"Failed to connect to API: {str(e)}"}
         )
 
 
@@ -183,11 +183,11 @@ async def proxy_nav(
     proxy_url = f"https://encar-proxy.habsida.net/api/nav?count={count}&q={encoded_q}&inav={encoded_inav}"
     print(f"Nav Proxy URL: {proxy_url}")
 
-    # Backup URL if the first one fails
-    backup_proxy_url = (
-        f"https://encar-proxy.habsida.net/api/nav?count={count}&q={q}&inav={inav}"
-    )
-    print(f"Nav Backup URL: {backup_proxy_url}")
+    # Setup proxy configuration
+    proxy_config = {
+        "http": "http://B01vby:GBno0x@45.118.250.2:8000",
+        "https": "http://B01vby:GBno0x@45.118.250.2:8000",
+    }
 
     # Headers for proxy request
     headers = {
@@ -200,7 +200,9 @@ async def proxy_nav(
         def make_request(url):
             try:
                 print(f"Making nav request to: {url}")
-                response = requests.get(url, headers=headers, timeout=30.0)
+                response = requests.get(
+                    url, headers=headers, proxies=proxy_config, timeout=30.0
+                )
                 return {
                     "success": True,
                     "status_code": response.status_code,
@@ -211,18 +213,11 @@ async def proxy_nav(
                 print(f"Nav request error: {str(e)}")
                 return {"success": False, "error": str(e), "url": url}
 
-        # Try first the primary proxy URL
+        # Try the proxy URL
         loop = asyncio.get_event_loop()
         response_data = await loop.run_in_executor(
             None, lambda: make_request(proxy_url)
         )
-
-        # If first request fails, try the backup URL
-        if not response_data["success"] or response_data["status_code"] != 200:
-            print(f"First nav proxy attempt failed. Trying backup URL...")
-            response_data = await loop.run_in_executor(
-                None, lambda: make_request(backup_proxy_url)
-            )
 
         if not response_data["success"]:
             print(f"Nav proxy request failed: {response_data['error']}")
@@ -251,8 +246,6 @@ async def proxy_nav(
 
         if status_code == 200:
             try:
-                import json
-
                 if not response_text or response_text.strip() == "":
                     print(f"Empty response from nav proxy")
                     return JSONResponse(
