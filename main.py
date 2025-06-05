@@ -90,9 +90,7 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         # Define a function to make a synchronous request using requests
         def make_request(url):
             try:
-                response = requests.get(
-                    url, headers=headers, timeout=30.0, proxies=proxy_config
-                )
+                response = requests.get(url, headers=headers, timeout=30.0)
                 return {
                     "success": True,
                     "status_code": response.status_code,
@@ -210,11 +208,6 @@ async def proxy_nav(
     # Manually ensure special characters are encoded properly
     encoded_q = q.replace("|", "%7C")
     encoded_inav = inav.replace("|", "%7C")
-
-    print(f"Original q: {q}")
-    print(f"Encoded q: {encoded_q}")
-    print(f"Original inav: {inav}")
-    print(f"Encoded inav: {encoded_inav}")
 
     # Use the proxy endpoint for nav API
     proxy_url = f"https://encar-proxy.habsida.net/api/nav?count={count}&q={encoded_q}&inav={encoded_inav}"
