@@ -221,8 +221,8 @@ async def proxy_nav(
 
     # Headers for proxy request
     headers = {
-        "accept": "application/json",
-        "user-agent": get_random_user_agent(),
+        "Referer": "https://www.intercarkorea.com/",
+        "User-Agent": get_random_user_agent(),
     }
 
     try:
