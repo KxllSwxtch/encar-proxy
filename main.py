@@ -47,17 +47,8 @@ def get_random_headers():
             chrome_version = "137"
 
     return {
-        "accept": "*/*",
-        "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
-        "origin": "https://www.intercarkorea.com",
-        "priority": "u=1, i",
-        "referer": "https://www.intercarkorea.com/",
-        "sec-ch-ua": f'"Google Chrome";v="{chrome_version}", "Chromium";v="{chrome_version}", "Not/A)Brand";v="24"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"macOS"' if "Macintosh" in user_agent else '"Windows"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
+        "origin": "https://korean-cars-catalogue.com",
+        "referer": "https://korean-cars-catalogue.com/",
         "user-agent": user_agent,
     }
 
