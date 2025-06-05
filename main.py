@@ -97,7 +97,6 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
                     url,
                     headers=headers,
                     timeout=30.0,
-                    proxies=proxy_config,
                     verify=True,  # Keep SSL verification
                 )
                 return {
@@ -252,7 +251,6 @@ async def proxy_nav(
                     url,
                     headers=headers,
                     timeout=30.0,
-                    proxies=proxy_config,
                     verify=True,
                 )
                 return {
