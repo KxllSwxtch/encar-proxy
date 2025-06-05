@@ -3,9 +3,9 @@ import requests
 headers = {
     "accept": "*/*",
     "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
-    "origin": "https://www.intercarkorea.com",
+    "origin": "https://cars.prokorea.trading",
     "priority": "u=1, i",
-    "referer": "https://www.intercarkorea.com/",
+    "referer": "https://cars.prokorea.trading/",
     "sec-ch-ua": '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"macOS"',
@@ -16,6 +16,6 @@ headers = {
 }
 
 response = requests.get(
-    "https://encar-proxy.habsida.net/api/catalog?count=true&q=(And.Hidden.N._.CarType.A._.SellType.%EC%9D%BC%EB%B0%98.)&sr=%7CModifiedDate%7C0%7C20",
+    "https://encar-proxy.habsida.net/api/catalog?count=true&q=(And.Hidden.N._.CarType.A._.SellType.%EC%9D%BC%EB%B0%98.)&sr=%7CModifiedDate%7C0%7C10",
     headers=headers,
 )
