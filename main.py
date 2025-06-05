@@ -1,5 +1,6 @@
 import requests  # Use requests instead of httpx
 import asyncio  # For running requests in a thread pool
+import random  # For random user agent selection
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -19,6 +20,46 @@ proxy_config = {
     "http": "http://B01vby:GBno0x@45.118.250.2:8000",
     "https": "http://B01vby:GBno0x@45.118.250.2:8000",
 }
+
+# Random user agents to reduce blocking probability
+USER_AGENTS = [
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2.1 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:122.0) Gecko/20100101 Firefox/122.0",
+]
+
+
+def get_random_headers():
+    """Generate headers with random user agent based on curlrequest.py example"""
+    user_agent = random.choice(USER_AGENTS)
+
+    # Extract Chrome version from user agent for sec-ch-ua header
+    chrome_version = "137"  # default
+    if "Chrome/" in user_agent:
+        try:
+            chrome_version = user_agent.split("Chrome/")[1].split(".")[0]
+        except:
+            chrome_version = "137"
+
+    return {
+        "accept": "*/*",
+        "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
+        "origin": "https://www.intercarkorea.com",
+        "priority": "u=1, i",
+        "referer": "https://www.intercarkorea.com/",
+        "sec-ch-ua": f'"Google Chrome";v="{chrome_version}", "Chromium";v="{chrome_version}", "Not/A)Brand";v="24"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"macOS"' if "Macintosh" in user_agent else '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "cross-site",
+        "user-agent": user_agent,
+    }
 
 
 @app.get("/api/catalog")
@@ -43,19 +84,21 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
     )
     print(f"Backup URL: {backup_proxy_url}")
 
-    # Simple headers for proxy request
-    headers = {
-        "accept": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    }
-
     try:
         # Define a function to make a synchronous request using requests
         def make_request(url):
             try:
+                # Generate random headers for each request
+                headers = get_random_headers()
                 print(f"Making request to: {url}")
+                print(f"Using User-Agent: {headers['user-agent']}")
+
                 response = requests.get(
-                    url, headers=headers, timeout=30.0, proxies=proxy_config
+                    url,
+                    headers=headers,
+                    timeout=30.0,
+                    proxies=proxy_config,
+                    verify=True,  # Keep SSL verification
                 )
                 return {
                     "success": True,
@@ -196,19 +239,21 @@ async def proxy_nav(
     )
     print(f"Nav Backup URL: {backup_proxy_url}")
 
-    # Headers for proxy request
-    headers = {
-        "accept": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    }
-
     try:
         # Define a function to make a synchronous request using requests
         def make_request(url):
             try:
+                # Generate random headers for each request
+                headers = get_random_headers()
                 print(f"Making nav request to: {url}")
+                print(f"Using User-Agent: {headers['user-agent']}")
+
                 response = requests.get(
-                    url, headers=headers, timeout=30.0, proxies=proxy_config
+                    url,
+                    headers=headers,
+                    timeout=30.0,
+                    proxies=proxy_config,
+                    verify=True,
                 )
                 return {
                     "success": True,
