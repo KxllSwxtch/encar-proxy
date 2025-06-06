@@ -23,7 +23,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Конфигурация без прокси - прямые соединения
+# Конфигурация residential прокси от iproyal
+IPROYAL_PROXY_CONFIGS = [
+    {
+        "name": "Korea Residential",
+        "proxy": "geo.iproyal.com:12321",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr",
+        "location": "South Korea",
+    },
+    # Можно добавить больше прокси с разными локациями
+    # {
+    #     "name": "Korea Residential Alt",
+    #     "proxy": "geo.iproyal.com:12322",
+    #     "auth": "username:password_country-kr_session-session123",
+    #     "location": "South Korea"
+    # }
+]
+
+
+def get_proxy_config(proxy_info):
+    """Формирует конфигурацию прокси для requests"""
+    proxy_url = f"http://{proxy_info['auth']}@{proxy_info['proxy']}"
+    return {"http": proxy_url, "https": proxy_url}
+
 
 # Расширенный набор User-Agent для ротации
 USER_AGENTS = [
@@ -49,16 +71,20 @@ BASE_HEADERS = {
 
 
 class EncarProxyClient:
-    """Продвинутый клиент для обхода защиты Encar API"""
+    """Продвинутый клиент для обхода защиты Encar API с residential прокси"""
 
     def __init__(self):
         self.session = requests.Session()
+        self.current_proxy_index = 0
         self.request_count = 0
         self.last_request_time = 0
 
         # Базовая конфигурация сессии
         self.session.timeout = (10, 30)  # connect timeout, read timeout
         self.session.max_redirects = 3
+
+        # Устанавливаем первый residential прокси
+        self._rotate_proxy()
 
     def _get_dynamic_headers(self) -> Dict[str, str]:
         """Генерируем динамические заголовки с ротацией"""
@@ -79,12 +105,28 @@ class EncarProxyClient:
 
         return headers
 
+    def _rotate_proxy(self):
+        """Ротация residential прокси"""
+        if IPROYAL_PROXY_CONFIGS:
+            proxy_info = IPROYAL_PROXY_CONFIGS[
+                self.current_proxy_index % len(IPROYAL_PROXY_CONFIGS)
+            ]
+            proxy_config = get_proxy_config(proxy_info)
+            self.session.proxies = proxy_config
+            self.current_proxy_index += 1
+            logger.info(f"Switched to {proxy_info['name']} ({proxy_info['location']})")
+            logger.info(f"Proxy: {proxy_info['proxy']}")
+
     def _rate_limit(self):
         """Простая защита от rate limiting"""
         current_time = time.time()
         if current_time - self.last_request_time < 0.5:  # Минимум 500ms между запросами
             time.sleep(0.5 - (current_time - self.last_request_time))
         self.last_request_time = time.time()
+
+        # Каждые 20 запросов - ротация прокси для избежания rate limits
+        if self.request_count % 20 == 0 and self.request_count > 0:
+            self._rotate_proxy()
 
         self.request_count += 1
 
@@ -119,11 +161,16 @@ class EncarProxyClient:
                         "url": url,
                         "attempt": attempt + 1,
                     }
+                elif response.status_code == 407:
+                    logger.warning("Proxy authentication failed - rotating proxy")
+                    self._rotate_proxy()
+                    continue
                 elif response.status_code in [429, 503]:
                     logger.warning(
-                        f"Rate limited ({response.status_code}) - waiting before retry"
+                        f"Rate limited ({response.status_code}) - waiting and rotating proxy"
                     )
                     await asyncio.sleep(2**attempt)  # Exponential backoff
+                    self._rotate_proxy()
                     continue
                 else:
                     logger.warning(
@@ -145,8 +192,21 @@ class EncarProxyClient:
                 await asyncio.sleep(1)
                 continue
 
+            except requests.exceptions.ProxyError as e:
+                logger.error(f"Proxy error: {str(e)} - rotating proxy")
+                self._rotate_proxy()
+                if attempt == max_retries - 1:
+                    return {
+                        "success": False,
+                        "error": f"Proxy error: {str(e)}",
+                        "url": url,
+                    }
+                await asyncio.sleep(1)
+                continue
+
             except requests.exceptions.ConnectionError as e:
-                logger.error(f"Connection error: {str(e)}")
+                logger.error(f"Connection error: {str(e)} - rotating proxy")
+                self._rotate_proxy()
                 if attempt == max_retries - 1:
                     return {
                         "success": False,
@@ -305,11 +365,25 @@ async def proxy_nav(
 @app.get("/health")
 async def health_check():
     """Проверка здоровья сервиса"""
+    current_proxy_info = None
+    if IPROYAL_PROXY_CONFIGS:
+        current_index = (proxy_client.current_proxy_index - 1) % len(
+            IPROYAL_PROXY_CONFIGS
+        )
+        current_proxy_info = IPROYAL_PROXY_CONFIGS[current_index]
+
     return {
         "status": "healthy",
         "proxy_client": {
             "request_count": proxy_client.request_count,
-            "direct_connection": True,
+            "current_proxy": (
+                current_proxy_info["name"] if current_proxy_info else "None"
+            ),
+            "current_location": (
+                current_proxy_info["location"] if current_proxy_info else "Direct"
+            ),
+            "available_proxies": len(IPROYAL_PROXY_CONFIGS),
+            "proxy_type": "Residential (iproyal)",
         },
     }
 
@@ -323,10 +397,11 @@ async def root():
         "endpoints": ["/api/catalog", "/api/nav", "/health"],
         "features": [
             "User-Agent rotation",
-            "Direct connection (no proxy)",
+            "Residential proxy rotation (Korea)",
             "Rate limiting protection",
             "Retry logic with exponential backoff",
             "Advanced error handling",
+            "Proxy authentication & rotation",
         ],
     }
 
