@@ -15,11 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-proxy_config = {
-    "http": "http://B01vby:GBno0x@45.118.250.2:8000",
-    "https": "http://B01vby:GBno0x@45.118.250.2:8000",
-}
-
 
 # Function to get proper headers matching the working curlrequest.py example
 def get_proper_headers():
@@ -64,9 +59,7 @@ async def proxy_catalog(q: str = Query(...), sr: str = Query(...)):
         # Define a function to make a synchronous request using requests
         def make_request(url):
             try:
-                response = requests.get(
-                    url, headers=headers, timeout=30.0, proxies=proxy_config
-                )
+                response = requests.get(url, headers=headers, timeout=30.0)
                 return {
                     "success": True,
                     "status_code": response.status_code,
@@ -203,9 +196,7 @@ async def proxy_nav(
         def make_request(url):
             try:
                 print(f"Making nav request to: {url}")
-                response = requests.get(
-                    url, headers=headers, timeout=30.0, proxies=proxy_config
-                )
+                response = requests.get(url, headers=headers, timeout=30.0)
                 return {
                     "success": True,
                     "status_code": response.status_code,
