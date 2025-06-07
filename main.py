@@ -78,12 +78,25 @@ class EncarProxyClient:
         self.current_proxy_index = 0
         self.request_count = 0
         self.last_request_time = 0
+        self.session_age = 0  # Отслеживаем возраст сессии
 
         # Базовая конфигурация сессии
         self.session.timeout = (10, 30)  # connect timeout, read timeout
         self.session.max_redirects = 3
 
         # Устанавливаем первый residential прокси
+        self._rotate_proxy()
+
+    def _reset_session(self):
+        """Полный сброс сессии для избежания блокировок"""
+        logger.warning("Resetting session to avoid 403 blocks")
+        self.session.close()  # Закрываем старую сессию
+        self.session = requests.Session()
+        self.session.timeout = (10, 30)
+        self.session.max_redirects = 3
+        self.session_age = 0
+
+        # Переустанавливаем прокси
         self._rotate_proxy()
 
     def _get_dynamic_headers(self) -> Dict[str, str]:
@@ -128,7 +141,12 @@ class EncarProxyClient:
         if self.request_count % 20 == 0 and self.request_count > 0:
             self._rotate_proxy()
 
+        # Каждые 100 запросов - полный сброс сессии
+        if self.request_count % 100 == 0 and self.request_count > 0:
+            self._reset_session()
+
         self.request_count += 1
+        self.session_age += 1
 
     async def make_request(self, url: str, max_retries: int = 3) -> Dict:
         """Выполняет запрос с retry логикой и обходом защиты"""
@@ -161,6 +179,14 @@ class EncarProxyClient:
                         "url": url,
                         "attempt": attempt + 1,
                     }
+                elif response.status_code == 403:
+                    logger.warning(
+                        "403 Forbidden - session may be blocked, resetting session"
+                    )
+                    self._reset_session()
+                    # Увеличиваем задержку для 403
+                    await asyncio.sleep(3 * (attempt + 1))  # 3, 6, 9 секунд
+                    continue
                 elif response.status_code == 407:
                     logger.warning("Proxy authentication failed - rotating proxy")
                     self._rotate_proxy()
@@ -376,6 +402,8 @@ async def health_check():
         "status": "healthy",
         "proxy_client": {
             "request_count": proxy_client.request_count,
+            "session_age": proxy_client.session_age,
+            "next_session_reset": 100 - (proxy_client.request_count % 100),
             "current_proxy": (
                 current_proxy_info["name"] if current_proxy_info else "None"
             ),
@@ -388,13 +416,32 @@ async def health_check():
     }
 
 
+@app.post("/reset-session")
+async def reset_session():
+    """Принудительный сброс сессии для разблокировки"""
+    old_count = proxy_client.request_count
+    old_age = proxy_client.session_age
+
+    proxy_client._reset_session()
+
+    return {
+        "success": True,
+        "message": "Session reset successfully",
+        "old_stats": {"request_count": old_count, "session_age": old_age},
+        "new_stats": {
+            "request_count": proxy_client.request_count,
+            "session_age": proxy_client.session_age,
+        },
+    }
+
+
 @app.get("/")
 async def root():
     """Корневой эндпоинт"""
     return {
         "service": "Encar Advanced Proxy",
         "version": "2.0",
-        "endpoints": ["/api/catalog", "/api/nav", "/health"],
+        "endpoints": ["/api/catalog", "/api/nav", "/health", "/reset-session"],
         "features": [
             "User-Agent rotation",
             "Residential proxy rotation (Korea)",
@@ -402,6 +449,8 @@ async def root():
             "Retry logic with exponential backoff",
             "Advanced error handling",
             "Proxy authentication & rotation",
+            "Automatic session reset (every 100 requests)",
+            "403 error handling with session reset",
         ],
     }
 
