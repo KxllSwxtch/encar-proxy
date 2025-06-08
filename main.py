@@ -74,17 +74,30 @@ class EncarProxyClient:
     """Продвинутый клиент для обхода защиты Encar API с residential прокси"""
 
     def __init__(self):
-        self.session = requests.Session()
         self.current_proxy_index = 0
         self.request_count = 0
         self.last_request_time = 0
+        self.session_request_count = 0  # Счетчик для текущей сессии
+
+        # Создаем первую сессию
+        self._create_fresh_session()
+
+    def _create_fresh_session(self):
+        """Создает новую чистую сессию"""
+        if hasattr(self, "session"):
+            self.session.close()  # Закрываем старую сессию
+
+        self.session = requests.Session()
+        self.session_request_count = 0
 
         # Базовая конфигурация сессии
         self.session.timeout = (10, 30)  # connect timeout, read timeout
         self.session.max_redirects = 3
 
-        # Устанавливаем первый residential прокси
+        # Устанавливаем прокси для новой сессии
         self._rotate_proxy()
+
+        logger.info("Created fresh session - cleared all cookies and connections")
 
     def _get_dynamic_headers(self) -> Dict[str, str]:
         """Генерируем динамические заголовки с ротацией"""
@@ -128,7 +141,13 @@ class EncarProxyClient:
         if self.request_count % 20 == 0 and self.request_count > 0:
             self._rotate_proxy()
 
+        # Каждые 50 запросов - создаем новую сессию для избежания блокировок
+        if self.session_request_count >= 50:
+            logger.info("Session refresh: 50 requests reached")
+            self._create_fresh_session()
+
         self.request_count += 1
+        self.session_request_count += 1
 
     async def make_request(self, url: str, max_retries: int = 3) -> Dict:
         """Выполняет запрос с retry логикой и обходом защиты"""
@@ -164,6 +183,13 @@ class EncarProxyClient:
                 elif response.status_code == 407:
                     logger.warning("Proxy authentication failed - rotating proxy")
                     self._rotate_proxy()
+                    continue
+                elif response.status_code == 403:
+                    logger.warning(
+                        "403 Forbidden - session blocked, creating fresh session"
+                    )
+                    self._create_fresh_session()
+                    await asyncio.sleep(2**attempt)  # Exponential backoff
                     continue
                 elif response.status_code in [429, 503]:
                     logger.warning(
@@ -376,6 +402,10 @@ async def health_check():
         "status": "healthy",
         "proxy_client": {
             "request_count": proxy_client.request_count,
+            "session_request_count": proxy_client.session_request_count,
+            "session_health": (
+                "Fresh" if proxy_client.session_request_count < 40 else "Aging"
+            ),
             "current_proxy": (
                 current_proxy_info["name"] if current_proxy_info else "None"
             ),
