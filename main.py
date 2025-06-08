@@ -31,13 +31,12 @@ IPROYAL_PROXY_CONFIGS = [
         "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr",
         "location": "South Korea",
     },
-    # Можно добавить больше прокси с разными локациями
-    # {
-    #     "name": "Korea Residential Alt",
-    #     "proxy": "geo.iproyal.com:12322",
-    #     "auth": "username:password_country-kr_session-session123",
-    #     "location": "South Korea"
-    # }
+    {
+        "name": "Japan and Korea Residential",
+        "proxy": "geo.iproyal.com:12321",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-jp,kr",
+        "location": "Japan and South Korea",
+    },
 ]
 
 
