@@ -31,13 +31,25 @@ IPROYAL_PROXY_CONFIGS = [
         "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_streaming-1",
         "location": "South Korea",
     },
-    # Можно добавить больше прокси с разными локациями
-    # {
-    #     "name": "Korea Residential Alt",
-    #     "proxy": "geo.iproyal.com:12322",
-    #     "auth": "username:password_country-kr_session-session123",
-    #     "location": "South Korea"
-    # }
+    # Добавляем session-based rotation для получения разных IP
+    {
+        "name": "Korea Residential S1",
+        "proxy": "geo.iproyal.com:12321",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sess1",
+        "location": "South Korea",
+    },
+    {
+        "name": "Korea Residential S2",
+        "proxy": "geo.iproyal.com:12321",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sess2",
+        "location": "South Korea",
+    },
+    {
+        "name": "Korea Residential S3",
+        "proxy": "geo.iproyal.com:12321",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sess3",
+        "location": "South Korea",
+    },
 ]
 
 
@@ -78,6 +90,7 @@ class EncarProxyClient:
         self.current_proxy_index = 0
         self.request_count = 0
         self.last_request_time = 0
+        self.session_rotation_count = 0
 
         # Базовая конфигурация сессии
         self.session.timeout = (10, 30)  # connect timeout, read timeout
@@ -117,6 +130,24 @@ class EncarProxyClient:
             logger.info(f"Switched to {proxy_info['name']} ({proxy_info['location']})")
             logger.info(f"Proxy: {proxy_info['proxy']}")
 
+    def _create_new_session(self):
+        """Создает новую сессию для полного сброса IP"""
+        logger.info("Creating new session to reset IP address...")
+
+        # Закрываем старую сессию
+        self.session.close()
+
+        # Создаем новую сессию
+        self.session = requests.Session()
+        self.session.timeout = (10, 30)
+        self.session.max_redirects = 3
+
+        # Принудительно меняем прокси на следующий
+        self._rotate_proxy()
+        self.session_rotation_count += 1
+
+        logger.info(f"New session created (rotation #{self.session_rotation_count})")
+
     def _rate_limit(self):
         """Простая защита от rate limiting"""
         current_time = time.time()
@@ -124,9 +155,14 @@ class EncarProxyClient:
             time.sleep(0.5 - (current_time - self.last_request_time))
         self.last_request_time = time.time()
 
-        # Каждые 20 запросов - ротация прокси для избежания rate limits
-        if self.request_count % 20 == 0 and self.request_count > 0:
+        # Каждые 15 запросов - ротация прокси для избежания rate limits
+        if self.request_count % 15 == 0 and self.request_count > 0:
             self._rotate_proxy()
+
+        # Каждые 50 запросов - полная ротация сессии для профилактики
+        if self.request_count % 50 == 0 and self.request_count > 0:
+            logger.info("Preventive session rotation")
+            self._create_new_session()
 
         self.request_count += 1
 
@@ -161,6 +197,12 @@ class EncarProxyClient:
                         "url": url,
                         "attempt": attempt + 1,
                     }
+                elif response.status_code == 403:
+                    logger.warning(f"IP blacklisted (403) - creating new session")
+                    self._create_new_session()
+                    # Дополнительная пауза при блокировке IP
+                    await asyncio.sleep(3 + random.uniform(0, 2))
+                    continue
                 elif response.status_code == 407:
                     logger.warning("Proxy authentication failed - rotating proxy")
                     self._rotate_proxy()
@@ -193,27 +235,27 @@ class EncarProxyClient:
                 continue
 
             except requests.exceptions.ProxyError as e:
-                logger.error(f"Proxy error: {str(e)} - rotating proxy")
-                self._rotate_proxy()
+                logger.error(f"Proxy error: {str(e)} - creating new session")
+                self._create_new_session()
                 if attempt == max_retries - 1:
                     return {
                         "success": False,
                         "error": f"Proxy error: {str(e)}",
                         "url": url,
                     }
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 continue
 
             except requests.exceptions.ConnectionError as e:
-                logger.error(f"Connection error: {str(e)} - rotating proxy")
-                self._rotate_proxy()
+                logger.error(f"Connection error: {str(e)} - creating new session")
+                self._create_new_session()
                 if attempt == max_retries - 1:
                     return {
                         "success": False,
                         "error": f"Connection error: {str(e)}",
                         "url": url,
                     }
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
                 continue
 
             except Exception as e:
@@ -232,6 +274,15 @@ class EncarProxyClient:
 
 # Глобальный клиент
 proxy_client = EncarProxyClient()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Корректное закрытие сессий при выключении сервера"""
+    logger.info("Shutting down server...")
+    if hasattr(proxy_client, "session"):
+        proxy_client.session.close()
+    logger.info("Sessions closed")
 
 
 async def handle_api_request(endpoint: str, params: Dict[str, str]) -> JSONResponse:
@@ -376,6 +427,7 @@ async def health_check():
         "status": "healthy",
         "proxy_client": {
             "request_count": proxy_client.request_count,
+            "session_rotations": proxy_client.session_rotation_count,
             "current_proxy": (
                 current_proxy_info["name"] if current_proxy_info else "None"
             ),
@@ -383,7 +435,7 @@ async def health_check():
                 current_proxy_info["location"] if current_proxy_info else "Direct"
             ),
             "available_proxies": len(IPROYAL_PROXY_CONFIGS),
-            "proxy_type": "Residential (iproyal)",
+            "proxy_type": "Residential (iproyal) with session rotation",
         },
     }
 
