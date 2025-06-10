@@ -31,25 +31,6 @@ IPROYAL_PROXY_CONFIGS = [
         "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_streaming-1",
         "location": "South Korea",
     },
-    # Добавляем session-based rotation для получения разных IP
-    {
-        "name": "Korea Residential S1",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sess1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential S2",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sess2",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential S3",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sess3",
-        "location": "South Korea",
-    },
 ]
 
 
