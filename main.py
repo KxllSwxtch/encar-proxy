@@ -28,7 +28,7 @@ IPROYAL_PROXY_CONFIGS = [
     {
         "name": "Korea Residential",
         "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_streaming-1",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr",
         "location": "South Korea",
     },
 ]
