@@ -23,68 +23,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Конфигурация residential прокси от iproyal - новый список с 10 уникальными сессиями
+# Конфигурация residential прокси от iproyal
 IPROYAL_PROXY_CONFIGS = [
     {
-        "name": "Korea Residential Session 1",
+        "name": "Korea Residential",
         "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-1AJdywdt_lifetime-30m_streaming-1",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_streaming-1",
         "location": "South Korea",
     },
-    {
-        "name": "Korea Residential Session 2",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-5bRULfLU_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 3",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-02Fr4c8J_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 4",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-k3kxfqPm_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 5",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-5Jm6VyvW_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 6",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-sGAoKxrc_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 7",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-7Mbb1Vkz_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 8",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-Yy9GUeGt_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 9",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-IUdm6KVn_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
-    {
-        "name": "Korea Residential Session 10",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr_session-93Djfujt_lifetime-30m_streaming-1",
-        "location": "South Korea",
-    },
+    # Можно добавить больше прокси с разными локациями
+    # {
+    #     "name": "Korea Residential Alt",
+    #     "proxy": "geo.iproyal.com:12322",
+    #     "auth": "username:password_country-kr_session-session123",
+    #     "location": "South Korea"
+    # }
 ]
 
 
@@ -94,35 +47,21 @@ def get_proxy_config(proxy_info):
     return {"http": proxy_url, "https": proxy_url}
 
 
-# Расширенный набор User-Agent для ротации - более разнообразный пул
+# Расширенный набор User-Agent для ротации
 USER_AGENTS = [
-    # Chrome последние версии - различные ОС
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    # Chrome чуть старые версии
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
-    # Firefox различные версии
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:134.0) Gecko/20100101 Firefox/134.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
-    "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
-    # Safari на Mac
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15",
-    # Edge
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
 ]
 
 # Базовые заголовки
 BASE_HEADERS = {
     "accept": "*/*",
     "accept-language": "en,ru;q=0.9,en-CA;q=0.8,la;q=0.7,fr;q=0.6,ko;q=0.5",
-    "origin": "https://intercarkorea.com",
+    "origin": "https://cars.prokorea.trading",
     "priority": "u=1, i",
-    "referer": "https://intercarkorea.com",
+    "referer": "https://cars.prokorea.trading/",
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"macOS"',
     "sec-fetch-dest": "empty",
@@ -135,32 +74,17 @@ class EncarProxyClient:
     """Продвинутый клиент для обхода защиты Encar API с residential прокси"""
 
     def __init__(self):
+        self.session = requests.Session()
         self.current_proxy_index = 0
         self.request_count = 0
         self.last_request_time = 0
-        self.session_request_count = 0  # Счетчик для текущей сессии
-        self.consecutive_403_count = 0  # Счетчик подряд идущих 403 ошибок
-        self.last_403_time = 0  # Время последней 403 ошибки
-
-        # Создаем первую сессию
-        self._create_fresh_session()
-
-    def _create_fresh_session(self):
-        """Создает новую чистую сессию"""
-        if hasattr(self, "session"):
-            self.session.close()  # Закрываем старую сессию
-
-        self.session = requests.Session()
-        self.session_request_count = 0
 
         # Базовая конфигурация сессии
         self.session.timeout = (10, 30)  # connect timeout, read timeout
         self.session.max_redirects = 3
 
-        # Устанавливаем прокси для новой сессии
+        # Устанавливаем первый residential прокси
         self._rotate_proxy()
-
-        logger.info("Created fresh session - cleared all cookies and connections")
 
     def _get_dynamic_headers(self) -> Dict[str, str]:
         """Генерируем динамические заголовки с ротацией"""
@@ -170,39 +94,13 @@ class EncarProxyClient:
         headers["user-agent"] = random.choice(USER_AGENTS)
 
         # Динамический sec-ch-ua на основе выбранного UA
-        if "Firefox" in headers["user-agent"]:
-            # Firefox не использует sec-ch-ua заголовки
-            headers.pop("sec-ch-ua", None)
-            headers.pop("sec-ch-ua-mobile", None)
-            headers.pop("sec-ch-ua-platform", None)
-        elif (
-            "Safari" in headers["user-agent"] and "Chrome" not in headers["user-agent"]
-        ):
-            # Safari не использует sec-ch-ua заголовки
-            headers.pop("sec-ch-ua", None)
-            headers.pop("sec-ch-ua-mobile", None)
-            headers.pop("sec-ch-ua-platform", None)
-        elif "Edg/" in headers["user-agent"]:
-            # Microsoft Edge
-            if "Chrome/137" in headers["user-agent"]:
-                headers["sec-ch-ua"] = (
-                    '"Microsoft Edge";v="137", "Chromium";v="137", "Not/A)Brand";v="24"'
-                )
-            elif "Chrome/136" in headers["user-agent"]:
-                headers["sec-ch-ua"] = (
-                    '"Microsoft Edge";v="136", "Chromium";v="136", "Not/A)Brand";v="24"'
-                )
-        elif "Chrome/137" in headers["user-agent"]:
+        if "Chrome/137" in headers["user-agent"]:
             headers["sec-ch-ua"] = (
                 '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"'
             )
         elif "Chrome/136" in headers["user-agent"]:
             headers["sec-ch-ua"] = (
                 '"Google Chrome";v="136", "Chromium";v="136", "Not/A)Brand";v="24"'
-            )
-        elif "Chrome/135" in headers["user-agent"]:
-            headers["sec-ch-ua"] = (
-                '"Google Chrome";v="135", "Chromium";v="135", "Not/A)Brand";v="24"'
             )
 
         return headers
@@ -220,48 +118,17 @@ class EncarProxyClient:
             logger.info(f"Proxy: {proxy_info['proxy']}")
 
     def _rate_limit(self):
-        """Простая защита от rate limiting с адаптивными интервалами"""
+        """Простая защита от rate limiting"""
         current_time = time.time()
-
-        # Базовая задержка между запросами
-        base_delay = 0.5
-
-        # Увеличиваем задержку если были недавние 403 ошибки
-        if self.consecutive_403_count > 0:
-            # Чем больше 403 подряд, тем больше задержка
-            base_delay = min(0.5 + (self.consecutive_403_count * 0.3), 2.0)
-            logger.info(
-                f"Increased delay to {base_delay}s due to {self.consecutive_403_count} consecutive 403s"
-            )
-
-        if current_time - self.last_request_time < base_delay:
-            time.sleep(base_delay - (current_time - self.last_request_time))
+        if current_time - self.last_request_time < 0.5:  # Минимум 500ms между запросами
+            time.sleep(0.5 - (current_time - self.last_request_time))
         self.last_request_time = time.time()
 
-        # Каждые 15 запросов - ротация прокси для избежания rate limits
-        # (уменьшено с 20 для более агрессивной ротации)
-        if self.request_count % 15 == 0 and self.request_count > 0:
+        # Каждые 20 запросов - ротация прокси для избежания rate limits
+        if self.request_count % 20 == 0 and self.request_count > 0:
             self._rotate_proxy()
 
-        # Адаптивное обновление сессий
-        session_limit = 50
-        if self.consecutive_403_count >= 2:
-            # Если часто получаем 403, обновляем сессию чаще
-            session_limit = 25
-            logger.info(
-                f"Reduced session limit to {session_limit} due to frequent 403s"
-            )
-        elif self.consecutive_403_count >= 5:
-            # Критическая ситуация - очень частое обновление
-            session_limit = 10
-            logger.warning(f"Critical mode: session limit reduced to {session_limit}")
-
-        if self.session_request_count >= session_limit:
-            logger.info(f"Session refresh: {session_limit} requests reached")
-            self._create_fresh_session()
-
         self.request_count += 1
-        self.session_request_count += 1
 
     async def make_request(self, url: str, max_retries: int = 3) -> Dict:
         """Выполняет запрос с retry логикой и обходом защиты"""
@@ -286,13 +153,6 @@ class EncarProxyClient:
                 logger.info(f"Response status: {response.status_code}")
 
                 if response.status_code == 200:
-                    # Сброс счетчика 403 при успешном запросе
-                    if self.consecutive_403_count > 0:
-                        logger.info(
-                            f"Success after {self.consecutive_403_count} consecutive 403s - resetting counter"
-                        )
-                        self.consecutive_403_count = 0
-
                     return {
                         "success": True,
                         "status_code": response.status_code,
@@ -304,38 +164,6 @@ class EncarProxyClient:
                 elif response.status_code == 407:
                     logger.warning("Proxy authentication failed - rotating proxy")
                     self._rotate_proxy()
-                    continue
-                elif response.status_code == 403:
-                    self.consecutive_403_count += 1
-                    self.last_403_time = time.time()
-
-                    logger.warning(
-                        f"403 Forbidden #{self.consecutive_403_count} - implementing aggressive countermeasures"
-                    )
-
-                    # Немедленная ротация прокси при 403
-                    self._rotate_proxy()
-
-                    # При первых 2-3 попытках - просто создаем свежую сессию
-                    if self.consecutive_403_count <= 3:
-                        self._create_fresh_session()
-                        await asyncio.sleep(1 + attempt)  # Небольшая задержка
-                    else:
-                        # При множественных 403 - более агрессивные меры
-                        logger.warning(
-                            "Multiple 403s detected - implementing advanced countermeasures"
-                        )
-                        self._create_fresh_session()
-
-                        # Увеличиваем задержку экспоненциально
-                        backoff_delay = min(2 ** min(attempt + 1, 4), 8)
-                        logger.info(f"Extended backoff: {backoff_delay}s")
-                        await asyncio.sleep(backoff_delay)
-
-                        # При критическом количестве 403 - дополнительная ротация
-                        if self.consecutive_403_count >= 5:
-                            self._rotate_proxy()
-
                     continue
                 elif response.status_code in [429, 503]:
                     logger.warning(
@@ -536,7 +364,7 @@ async def proxy_nav(
 
 @app.get("/health")
 async def health_check():
-    """Проверка здоровья сервиса с детальной диагностикой"""
+    """Проверка здоровья сервиса"""
     current_proxy_info = None
     if IPROYAL_PROXY_CONFIGS:
         current_index = (proxy_client.current_proxy_index - 1) % len(
@@ -544,28 +372,10 @@ async def health_check():
         )
         current_proxy_info = IPROYAL_PROXY_CONFIGS[current_index]
 
-    # Определяем состояние системы
-    system_status = "healthy"
-    if proxy_client.consecutive_403_count >= 5:
-        system_status = "critical"
-    elif proxy_client.consecutive_403_count >= 2:
-        system_status = "warning"
-
-    # Время с последней 403 ошибки
-    time_since_last_403 = (
-        int(time.time() - proxy_client.last_403_time)
-        if proxy_client.last_403_time > 0
-        else None
-    )
-
     return {
-        "status": system_status,
+        "status": "healthy",
         "proxy_client": {
             "request_count": proxy_client.request_count,
-            "session_request_count": proxy_client.session_request_count,
-            "session_health": (
-                "Fresh" if proxy_client.session_request_count < 40 else "Aging"
-            ),
             "current_proxy": (
                 current_proxy_info["name"] if current_proxy_info else "None"
             ),
@@ -575,25 +385,6 @@ async def health_check():
             "available_proxies": len(IPROYAL_PROXY_CONFIGS),
             "proxy_type": "Residential (iproyal)",
         },
-        "security_status": {
-            "consecutive_403_count": proxy_client.consecutive_403_count,
-            "time_since_last_403_seconds": time_since_last_403,
-            "blocking_resistance": (
-                "high"
-                if proxy_client.consecutive_403_count == 0
-                else "medium" if proxy_client.consecutive_403_count < 3 else "low"
-            ),
-            "adaptive_delays_active": proxy_client.consecutive_403_count > 0,
-        },
-        "features_active": [
-            "Multi-proxy rotation (iproyal residential)",
-            "Adaptive User-Agent rotation (13 different browsers)",
-            "Sticky sessions with dynamic lifetime",
-            "Anti-403 countermeasures",
-            "Adaptive rate limiting",
-            "Session health monitoring",
-            "Exponential backoff on errors",
-        ],
     }
 
 
