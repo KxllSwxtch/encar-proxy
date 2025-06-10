@@ -51,11 +51,20 @@ def get_proxy_config(proxy_info):
 
 # Расширенный набор User-Agent для ротации
 USER_AGENTS = [
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+    # Desktop Chrome
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.113 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.78 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.61 Safari/537.36",
+    # Desktop Firefox
+    "Mozilla/5.0 (Windows NT 10.0; rv:124.0) Gecko/20100101 Firefox/124.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+    # Mobile Safari
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    # Mobile Chrome
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.113 Mobile Safari/537.36",
+    "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.78 Mobile Safari/537.36",
 ]
+
 
 # Базовые заголовки
 BASE_HEADERS = {
@@ -90,21 +99,44 @@ class EncarProxyClient:
         self._rotate_proxy()
 
     def _get_dynamic_headers(self) -> Dict[str, str]:
-        """Генерируем динамические заголовки с ротацией"""
+        ua = random.choice(USER_AGENTS)
+
+        # Подбираем headers под User-Agent
         headers = BASE_HEADERS.copy()
+        headers["user-agent"] = ua
 
-        # Ротация User-Agent
-        headers["user-agent"] = random.choice(USER_AGENTS)
+        # Chrome версия (нужно для sec-ch-ua)
+        if "Chrome/125" in ua:
+            headers["sec-ch-ua"] = (
+                '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"'
+            )
+        elif "Chrome/124" in ua:
+            headers["sec-ch-ua"] = (
+                '"Google Chrome";v="124", "Chromium";v="124", "Not.A/Brand";v="24"'
+            )
+        elif "Chrome/123" in ua:
+            headers["sec-ch-ua"] = (
+                '"Google Chrome";v="123", "Chromium";v="123", "Not.A/Brand";v="24"'
+            )
+        else:
+            headers["sec-ch-ua"] = '"Chromium";v="125", "Not.A/Brand";v="24"'
 
-        # Динамический sec-ch-ua на основе выбранного UA
-        if "Chrome/137" in headers["user-agent"]:
-            headers["sec-ch-ua"] = (
-                '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"'
-            )
-        elif "Chrome/136" in headers["user-agent"]:
-            headers["sec-ch-ua"] = (
-                '"Google Chrome";v="136", "Chromium";v="136", "Not/A)Brand";v="24"'
-            )
+        # Платформа и мобильность
+        if "Android" in ua:
+            headers["sec-ch-ua-platform"] = '"Android"'
+            headers["sec-ch-ua-mobile"] = "?1"
+        elif "iPhone" in ua:
+            headers["sec-ch-ua-platform"] = '"iOS"'
+            headers["sec-ch-ua-mobile"] = "?1"
+        elif "Macintosh" in ua:
+            headers["sec-ch-ua-platform"] = '"macOS"'
+            headers["sec-ch-ua-mobile"] = "?0"
+        elif "Windows" in ua:
+            headers["sec-ch-ua-platform"] = '"Windows"'
+            headers["sec-ch-ua-mobile"] = "?0"
+        else:
+            headers["sec-ch-ua-platform"] = '"Unknown"'
+            headers["sec-ch-ua-mobile"] = "?0"
 
         return headers
 
