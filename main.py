@@ -23,13 +23,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Конфигурация residential прокси от iproyal
-IPROYAL_PROXY_CONFIGS = [
+# Конфигурация residential прокси
+PROXY_CONFIGS = [
     {
-        "name": "Korea Residential",
+        "name": "IPRoyal Korea Residential",
         "proxy": "geo.iproyal.com:12321",
         "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr",
         "location": "South Korea",
+        "provider": "iproyal",
+    },
+    {
+        "name": "Oxylabs Korea Residential",
+        "proxy": "pr.oxylabs.io:7777",
+        "auth": "customer-admin_27be3-cc-KR:5e=JR+RsR829icd",
+        "location": "South Korea",
+        "provider": "oxylabs",
     },
 ]
 
@@ -101,14 +109,14 @@ class EncarProxyClient:
 
     def _rotate_proxy(self):
         """Ротация residential прокси"""
-        if IPROYAL_PROXY_CONFIGS:
-            proxy_info = IPROYAL_PROXY_CONFIGS[
-                self.current_proxy_index % len(IPROYAL_PROXY_CONFIGS)
-            ]
+        if PROXY_CONFIGS:
+            proxy_info = PROXY_CONFIGS[self.current_proxy_index % len(PROXY_CONFIGS)]
             proxy_config = get_proxy_config(proxy_info)
             self.session.proxies = proxy_config
             self.current_proxy_index += 1
-            logger.info(f"Switched to {proxy_info['name']} ({proxy_info['location']})")
+            logger.info(
+                f"Switched to {proxy_info['name']} ({proxy_info['location']}) via {proxy_info['provider']}"
+            )
             logger.info(f"Proxy: {proxy_info['proxy']}")
 
     def _create_new_session(self):
@@ -398,11 +406,17 @@ async def proxy_nav(
 async def health_check():
     """Проверка здоровья сервиса"""
     current_proxy_info = None
-    if IPROYAL_PROXY_CONFIGS:
-        current_index = (proxy_client.current_proxy_index - 1) % len(
-            IPROYAL_PROXY_CONFIGS
-        )
-        current_proxy_info = IPROYAL_PROXY_CONFIGS[current_index]
+    if PROXY_CONFIGS:
+        current_index = (proxy_client.current_proxy_index - 1) % len(PROXY_CONFIGS)
+        current_proxy_info = PROXY_CONFIGS[current_index]
+
+    # Собираем информацию о всех провайдерах
+    providers = {}
+    for config in PROXY_CONFIGS:
+        provider = config["provider"]
+        if provider not in providers:
+            providers[provider] = 0
+        providers[provider] += 1
 
     return {
         "status": "healthy",
@@ -412,11 +426,15 @@ async def health_check():
             "current_proxy": (
                 current_proxy_info["name"] if current_proxy_info else "None"
             ),
+            "current_provider": (
+                current_proxy_info["provider"] if current_proxy_info else "None"
+            ),
             "current_location": (
                 current_proxy_info["location"] if current_proxy_info else "Direct"
             ),
-            "available_proxies": len(IPROYAL_PROXY_CONFIGS),
-            "proxy_type": "Residential (iproyal) with session rotation",
+            "available_proxies": len(PROXY_CONFIGS),
+            "providers": providers,
+            "proxy_type": "Residential multi-provider with session rotation",
         },
     }
 
@@ -426,16 +444,20 @@ async def root():
     """Корневой эндпоинт"""
     return {
         "service": "Encar Advanced Proxy",
-        "version": "2.0",
+        "version": "2.1",
         "endpoints": ["/api/catalog", "/api/nav", "/health"],
         "features": [
             "User-Agent rotation",
-            "Residential proxy rotation (Korea)",
+            "Multi-provider residential proxy rotation (Korea)",
+            "IPRoyal + Oxylabs proxy pools",
+            "Automatic session rotation on 403 errors",
             "Rate limiting protection",
             "Retry logic with exponential backoff",
             "Advanced error handling",
             "Proxy authentication & rotation",
         ],
+        "providers": [config["provider"] for config in PROXY_CONFIGS],
+        "total_proxies": len(PROXY_CONFIGS),
     }
 
 
