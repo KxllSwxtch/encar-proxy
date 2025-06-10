@@ -7,6 +7,7 @@ from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import logging
+import uuid
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -40,6 +41,14 @@ PROXY_CONFIGS = [
         "provider": "oxylabs",
     },
 ]
+
+
+def generate_oxylabs_auth(base_auth: str) -> str:
+    # Пример: customer-admin_27be3-cc-KR → customer-admin_27be3-cc-KR-sessid-abc123
+    sessid = f"sessid-{uuid.uuid4().hex[:10]}"
+    if "sessid" not in base_auth:
+        return f"{base_auth}-{sessid}"
+    return base_auth
 
 
 def get_proxy_config(proxy_info):
@@ -111,6 +120,8 @@ class EncarProxyClient:
         """Ротация residential прокси"""
         if PROXY_CONFIGS:
             proxy_info = PROXY_CONFIGS[self.current_proxy_index % len(PROXY_CONFIGS)]
+            if proxy_info["provider"] == "oxylabs":
+                proxy_info["auth"] = generate_oxylabs_auth(proxy_info["auth"])
             proxy_config = get_proxy_config(proxy_info)
             self.session.proxies = proxy_config
             self.current_proxy_index += 1
