@@ -28,8 +28,8 @@ app.add_middleware(
 PROXY_CONFIGS = [
     {
         "name": "IPRoyal Korea Residential",
-        "proxy": "geo.iproyal.com:12321",
-        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr",
+        "proxy": "geo.iproyal.com:11200",
+        "auth": "oGKgjVaIooWADkOR:O8J73QYtjYWgQj4m_country-kr,ru",
         "location": "South Korea",
         "provider": "iproyal",
     },
